@@ -3,56 +3,21 @@ let currentUser = null;
 let projects = [
   {
     id: 1,
-    name: 'Site Web E-commerce',
-    description: 'Développement d\'une plateforme de vente en ligne avec panier et paiement sécurisé',
+    name: 'Gestionnaire de projet',
+    description: 'Création d\'un site web pour gérer des projets, des tâches et des contacts.',
     status: 'inprogress',
-    deadline: '2025-12-15'
+    deadline: '2025-12-05'
   },
-  {
-    id: 2,
-    name: 'Application Mobile',
-    description: 'Application de gestion de tâches avec synchronisation cloud',
-    status: 'planning',
-    deadline: '2026-01-20'
-  },
-  {
-    id: 3,
-    name: 'Refonte UI/UX',
-    description: 'Modernisation de l\'interface utilisateur du dashboard principal',
-    status: 'completed',
-    deadline: '2025-11-01'
-  }
 ];
 
 let contacts = [
   {
     id: 1,
-    name: 'Marie Dubois',
-    email: 'marie.dubois@example.com',
+    name: 'Romain Serrano-Cottat',
+    email: 'rserranocottat@guardiaschool.fr',
     phone: '+33 6 12 34 56 78',
-    role: 'Chef de projet'
+    role: 'Frontend Leader'
   },
-  {
-    id: 2,
-    name: 'Thomas Martin',
-    email: 'thomas.martin@example.com',
-    phone: '+33 6 98 76 54 32',
-    role: 'Développeur Full-Stack'
-  },
-  {
-    id: 3,
-    name: 'Sophie Bernard',
-    email: 'sophie.bernard@example.com',
-    phone: '+33 6 45 67 89 01',
-    role: 'Designer UI/UX'
-  },
-  {
-    id: 4,
-    name: 'Lucas Petit',
-    email: 'lucas.petit@example.com',
-    phone: '+33 6 23 45 67 89',
-    role: 'Product Owner'
-  }
 ];
 
 // DOM elements
