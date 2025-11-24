@@ -5,6 +5,7 @@ let projects = [
     id: 1,
     name: 'Gestionnaire de projet',
     description: 'Création d\'un site web pour gérer des projets, des tâches et des contacts.',
+    collaborators: 'alice',
     status: 'inprogress',
     deadline: '2025-12-05'
   },
@@ -87,7 +88,7 @@ function setupEventListeners() {
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const view = btn.dataset.view;
-      if (!view) return; // Sécurité supplémentaire
+      if (!view) return; // SÃ©curitÃ© supplÃ©mentaire
       
       switchView(view);
       
@@ -156,12 +157,17 @@ function createProjectCard(project) {
   const card = document.createElement('div');
   card.className = 'project-card';
   
+  const collaborators = {
+    alice: 'Alice Dupont',
+    bob: 'Bob Martin',
+    carol: 'Carol Durand'
+  };
+
   const statusLabels = {
-    planning: 'Planification',
     inprogress: 'En cours',
     completed: 'Terminé'
   };
-  
+
   const formattedDeadline = new Date(project.deadline).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
@@ -174,6 +180,13 @@ function createProjectCard(project) {
       <span class="project-status status-${project.status}">${statusLabels[project.status]}</span>
     </div>
     <p class="project-description">${project.description}</p>
+    <div class="project-collaborators">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="7" r="4">${collaborators[project.collaborators]}</circle>
+        <path d="M5.5 21a8.38 8.38 0 0 1 13 0"></path>
+      </svg>
+      Collaborateur: ${collaborators[project.collaborators]}
+    </div>
     <div class="project-deadline">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -191,6 +204,7 @@ function createProjectCard(project) {
 function addProject() {
   const name = document.getElementById('projectName').value;
   const description = document.getElementById('projectDescription').value;
+  const collaborators = document.getElementById('projectManager').value;
   const status = document.getElementById('projectStatus').value;
   const deadline = document.getElementById('projectDeadline').value;
   
@@ -198,6 +212,7 @@ function addProject() {
     id: projects.length + 1,
     name,
     description,
+    collaborators,
     status,
     deadline
   };
@@ -238,7 +253,7 @@ function createContactCard(contact) {
   card.innerHTML = `
     <div class="contact-avatar">${initials}</div>
     <div class="contact-name">${contact.name}</div>
-    <div class="contact-role">${contact.role || 'Non spécifié'}</div>
+    <div class="contact-role">${contact.role || 'Non spÃ©cifiÃ©'}</div>
     <div class="contact-info">
       <div class="contact-info-item">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
