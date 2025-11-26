@@ -39,6 +39,9 @@ let registeredUsers = [
   }
 ];
 
+let editingProjectId = null;
+let selectedCollaborators = [];
+
 // ==========================================
 // ÉLÉMENTS DU DOM
 // ==========================================
@@ -402,12 +405,16 @@ function setupAppEventListeners() {
   
   // Ajout de projet
   document.getElementById('addProjectBtn').addEventListener('click', () => {
+    editingProjectId = null;
+    selectedCollaborators = [];
+    resetProjectForm();
+    renderCollaboratorsList();
     document.getElementById('addProjectModal').classList.remove('hidden');
   });
   
   document.getElementById('addProjectForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    addProject();
+    addOrUpdateProject();
   });
   
   // Ajout de contact
@@ -447,6 +454,81 @@ function switchView(viewName) {
 }
 
 // ==========================================
+// GESTION DES COLLABORATEURS
+// ==========================================
+
+function renderCollaboratorsList() {
+  const container = document.getElementById('projectCollaborators');
+  if (!container) return;
+
+  // Créer le conteneur si n'existe pas
+  let collaboratorsContainer = document.getElementById('collaboratorsListContainer');
+  if (!collaboratorsContainer) {
+    collaboratorsContainer = document.createElement('div');
+    collaboratorsContainer.id = 'collaboratorsListContainer';
+    collaboratorsContainer.style.cssText = 'margin-top: 12px; padding: 12px; background: var(--color-secondary); border-radius: 8px;';
+    container.parentElement.insertBefore(collaboratorsContainer, container.nextElementSibling);
+  }
+
+  let html = '<div style="margin-bottom: 12px;"><strong>Sélectionnez les collaborateurs :</strong></div>';
+  html += '<div style="display: flex; flex-wrap: wrap; gap: 8px;">';
+
+  contacts.forEach(contact => {
+    const isSelected = selectedCollaborators.includes(contact.id);
+    html += `
+      <button type="button" class="btn btn--sm" data-add-collaborator="${contact.id}" style="background: ${isSelected ? 'var(--color-primary)' : 'var(--color-surface)'}; color: ${isSelected ? 'var(--color-btn-primary-text)' : 'var(--color-text)'}; border: 1px solid var(--color-border); cursor: pointer;">
+        ${contact.name}
+      </button>
+    `;
+  });
+
+  html += '</div>';
+
+  // Afficher les collaborateurs sélectionnés
+  if (selectedCollaborators.length > 0) {
+    html += '<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border);"><strong>Collaborateurs sélectionnés :</strong></div>';
+    html += '<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">';
+    
+    selectedCollaborators.forEach(id => {
+      const contact = contacts.find(c => c.id === id);
+      if (contact) {
+        html += `
+          <div style="background: var(--color-primary); color: var(--color-btn-primary-text); padding: 6px 12px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+            ${contact.name}
+            <button type="button" class="btn" data-remove-collaborator="${id}" style="background: none; border: none; color: inherit; cursor: pointer; padding: 0; font-size: 16px; line-height: 1;">×</button>
+          </div>
+        `;
+      }
+    });
+    
+    html += '</div>';
+  }
+
+  collaboratorsContainer.innerHTML = html;
+
+  // Ajouter les event listeners
+  collaboratorsContainer.querySelectorAll('[data-add-collaborator]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const contactId = parseInt(btn.dataset.addCollaborator);
+      if (!selectedCollaborators.includes(contactId)) {
+        selectedCollaborators.push(contactId);
+        renderCollaboratorsList();
+      }
+    });
+  });
+
+  collaboratorsContainer.querySelectorAll('[data-remove-collaborator]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const contactId = parseInt(btn.dataset.removeCollaborator);
+      selectedCollaborators = selectedCollaborators.filter(id => id !== contactId);
+      renderCollaboratorsList();
+    });
+  });
+}
+
+// ==========================================
 // GESTION DES PROJETS
 // ==========================================
 
@@ -470,7 +552,6 @@ function createProjectCard(project) {
   card.className = 'project-card';
   
   const statusLabels = {
-    planning: 'Planification',
     inprogress: 'En cours',
     completed: 'Terminé'
   };
@@ -502,41 +583,119 @@ function createProjectCard(project) {
       </svg>
       Date limite: ${formattedDeadline}
     </div>
+    <div class="project-actions" style="display: flex; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+      <button class="btn btn--sm btn--primary" data-edit-project="${project.id}" style="flex: 1;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        Modifier
+      </button>
+      <button class="btn btn--sm btn--secondary" data-delete-project="${project.id}" style="flex: 1;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+        Supprimer
+      </button>
+    </div>
   `;
+
+  // Ajouter les event listeners pour les boutons
+  const editBtn = card.querySelector(`[data-edit-project="${project.id}"]`);
+  const deleteBtn = card.querySelector(`[data-delete-project="${project.id}"]`);
+
+  editBtn.addEventListener('click', () => {
+    editProject(project.id);
+  });
+
+  deleteBtn.addEventListener('click', () => {
+    deleteProject(project.id);
+  });
   
   return card;
 }
 
-function addProject() {
+function editProject(projectId) {
+  const project = projects.find(p => p.id === projectId);
+  if (!project) return;
+
+  editingProjectId = projectId;
+  selectedCollaborators = [...project.collaborators];
+  
+  // Remplir le formulaire avec les données du projet
+  document.getElementById('projectName').value = project.name;
+  document.getElementById('projectDescription').value = project.description;
+  document.getElementById('projectStatus').value = project.status;
+  document.getElementById('projectDeadline').value = project.deadline;
+
+  // Changer le titre de la modale et le texte du bouton
+  document.querySelector('#addProjectModal .modal-header h2').textContent = 'Modifier le projet';
+  document.querySelector('#addProjectForm button[type="submit"]').textContent = 'Mettre à jour';
+
+  // Afficher les collaborateurs
+  renderCollaboratorsList();
+
+  // Ouvrir la modale
+  document.getElementById('addProjectModal').classList.remove('hidden');
+}
+
+function deleteProject(projectId) {
+  if (confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
+    projects = projects.filter(p => p.id !== projectId);
+    renderProjects();
+  }
+}
+
+function resetProjectForm() {
+  document.getElementById('addProjectForm').reset();
+  document.querySelector('#addProjectModal .modal-header h2').textContent = 'Nouveau projet';
+  document.querySelector('#addProjectForm button[type="submit"]').textContent = 'Créer';
+  selectedCollaborators = [];
+  const collaboratorsContainer = document.getElementById('collaboratorsListContainer');
+  if (collaboratorsContainer) {
+    collaboratorsContainer.remove();
+  }
+}
+
+function addOrUpdateProject() {
   const name = document.getElementById('projectName').value;
   const description = document.getElementById('projectDescription').value;
-  const collaboratorsInput = document.getElementById('projectCollaborators').value;
   const status = document.getElementById('projectStatus').value;
   const deadline = document.getElementById('projectDeadline').value;
-  
-  // Conversion des noms de collaborateurs en IDs
-  const collaboratorIds = [];
-  collaboratorsInput.split(',').forEach(name => {
-    const contact = contacts.find(c => c.name.toLowerCase() === name.trim().toLowerCase());
-    if (contact) {
-      collaboratorIds.push(contact.id);
+
+  if (editingProjectId) {
+    // Modification d'un projet existant
+    const projectIndex = projects.findIndex(p => p.id === editingProjectId);
+    if (projectIndex !== -1) {
+      projects[projectIndex] = {
+        ...projects[projectIndex],
+        name,
+        description,
+        status,
+        deadline,
+        collaborators: selectedCollaborators
+      };
     }
-  });
-  
-  const newProject = {
-    id: Math.max(...projects.map(p => p.id), 0) + 1,
-    name,
-    description,
-    status,
-    deadline,
-    collaborators: collaboratorIds
-  };
-  
-  projects.push(newProject);
+  } else {
+    // Création d'un nouveau projet
+    const newProject = {
+      id: Math.max(...projects.map(p => p.id), 0) + 1,
+      name,
+      description,
+      status,
+      deadline,
+      collaborators: selectedCollaborators
+    };
+    projects.push(newProject);
+  }
+
   renderProjects();
-  
   document.getElementById('addProjectModal').classList.add('hidden');
-  document.getElementById('addProjectForm').reset();
+  resetProjectForm();
+  editingProjectId = null;
 }
 
 // ==========================================
