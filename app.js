@@ -1,4 +1,7 @@
-// State management
+// ==========================================
+// GESTION D'ÉTAT (State Management)
+// ==========================================
+
 let currentUser = null;
 let projects = [
   {
@@ -6,7 +9,8 @@ let projects = [
     name: 'Gestionnaire de projet',
     description: 'Création d\'un site web pour gérer des projets, des tâches et des contacts.',
     status: 'inprogress',
-    deadline: '2025-12-05'
+    deadline: '2025-12-05',
+    collaborators: [1, 2]
   },
 ];
 
@@ -18,76 +22,376 @@ let contacts = [
     phone: '+33 6 12 34 56 78',
     role: 'Frontend Leader'
   },
+  {
+    id: 2,
+    name: 'Alice Dupont',
+    email: 'adupont@test.com',
+    phone: '+33 7 87 65 43 21',
+    role: 'Backend Developer'
+  }
 ];
 
-// DOM elements
-const loginModal = document.getElementById('loginModal');
+let registeredUsers = [
+  {
+    email: 'admin@test.com',
+    password: 'admin123',
+    fullname: 'Administrator'
+  }
+];
+
+// ==========================================
+// ÉLÉMENTS DU DOM
+// ==========================================
+
+const container = document.querySelector('.container');
 const mainApp = document.getElementById('mainApp');
+const signupForm = document.getElementById('signupForm');
 const loginForm = document.getElementById('loginForm');
+const tabButtons = document.querySelectorAll('.tab-btn');
+const headerTitle = document.getElementById('headerTitle');
+const headerDesc = document.getElementById('headerDesc');
+const successMessage = document.getElementById('successMessage');
+const loginSuccessMessage = document.getElementById('loginSuccessMessage');
 const logoutBtn = document.getElementById('logoutBtn');
 const userWelcome = document.getElementById('userWelcome');
 
-// Initialize app
+// ==========================================
+// INITIALISATION DE L'APPLICATION
+// ==========================================
+
 document.addEventListener('DOMContentLoaded', () => {
   checkAuth();
-  setupEventListeners();
+  setupAuthEventListeners();
+  setupAppEventListeners();
 });
 
-// Authentication
+// ==========================================
+// AUTHENTIFICATION - TAB SWITCHING
+// ==========================================
+
+tabButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tabName = btn.dataset.tab;
+    
+    // Mise à jour de l'onglet actif
+    tabButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Affichage/Masquage des formulaires
+    if (tabName === 'signup') {
+      signupForm.style.display = 'block';
+      loginForm.style.display = 'none';
+      headerTitle.textContent = 'Inscription';
+      headerDesc.textContent = 'Créez votre compte pour commencer';
+    } else {
+      signupForm.style.display = 'none';
+      loginForm.style.display = 'block';
+      headerTitle.textContent = 'Connexion';
+      headerDesc.textContent = 'Connectez-vous à votre compte';
+    }
+
+    // Réinitialisation des messages
+    successMessage.classList.remove('show');
+    loginSuccessMessage.classList.remove('show');
+  });
+});
+
+// ==========================================
+// AUTHENTIFICATION - INSCRIPTION
+// ==========================================
+
+const fullnameInput = document.getElementById('fullname');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const confirmPasswordInput = document.getElementById('confirmPassword');
+const termsInput = document.getElementById('terms');
+const togglePasswordBtn = document.getElementById('togglePassword');
+const strengthBar = document.getElementById('strengthBar');
+
+// Indicateur de force du mot de passe
+passwordInput.addEventListener('input', () => {
+  const value = passwordInput.value;
+  let strength = 0;
+  
+  if (value.length >= 8) strength++;
+  if (/[a-z]/.test(value) && /[A-Z]/.test(value)) strength++;
+  if (/[0-9]/.test(value)) strength++;
+  if (/[^a-zA-Z0-9]/.test(value)) strength++;
+
+  strengthBar.classList.remove('medium', 'strong');
+  if (strength === 2) strengthBar.classList.add('medium');
+  else if (strength >= 3) strengthBar.classList.add('strong');
+  
+  validateSignupField(passwordInput);
+});
+
+// Affichage/Masquage du mot de passe - Inscription
+togglePasswordBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  const type = passwordInput.type === 'password' ? 'text' : 'password';
+  passwordInput.type = type;
+  togglePasswordBtn.textContent = type === 'password' ? '👁️' : '🙈';
+});
+
+// Validation au blur
+fullnameInput.addEventListener('blur', () => validateSignupField(fullnameInput));
+emailInput.addEventListener('blur', () => validateSignupField(emailInput));
+passwordInput.addEventListener('blur', () => validateSignupField(passwordInput));
+confirmPasswordInput.addEventListener('blur', () => validateSignupField(confirmPasswordInput));
+
+function validateSignupField(field) {
+  const errorElement = document.getElementById(field.id + 'Error');
+  let isValid = true;
+  let errorMsg = '';
+
+  if (field.id === 'fullname') {
+    if (!field.value.trim()) {
+      isValid = false;
+      errorMsg = 'Le nom complet est requis';
+    } else if (field.value.trim().length < 3) {
+      isValid = false;
+      errorMsg = 'Le nom doit contenir au moins 3 caractères';
+    }
+  }
+
+  if (field.id === 'email') {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!field.value.trim()) {
+      isValid = false;
+      errorMsg = 'L\'adresse e-mail est requise';
+    } else if (!emailRegex.test(field.value)) {
+      isValid = false;
+      errorMsg = 'Veuillez entrer une adresse e-mail valide';
+    }
+  }
+
+  if (field.id === 'password') {
+    if (!field.value) {
+      isValid = false;
+      errorMsg = 'Le mot de passe est requis';
+    } else if (field.value.length < 8) {
+      isValid = false;
+      errorMsg = 'Le mot de passe doit contenir au moins 8 caractères';
+    } else if (!/[a-z]/.test(field.value) || !/[A-Z]/.test(field.value)) {
+      isValid = false;
+      errorMsg = 'Le mot de passe doit contenir des majuscules et minuscules';
+    }
+  }
+
+  if (field.id === 'confirmPassword') {
+    if (!field.value) {
+      isValid = false;
+      errorMsg = 'La confirmation est requise';
+    } else if (field.value !== passwordInput.value) {
+      isValid = false;
+      errorMsg = 'Les mots de passe ne correspondent pas';
+    }
+  }
+
+  if (isValid) {
+    field.classList.remove('error');
+    field.classList.add('success');
+    errorElement.classList.remove('show');
+  } else {
+    field.classList.remove('success');
+    field.classList.add('error');
+    errorElement.textContent = errorMsg;
+    errorElement.classList.add('show');
+  }
+
+  return isValid;
+}
+
+signupForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  // Validation de tous les champs
+  const fullnameValid = validateSignupField(fullnameInput);
+  const emailValid = validateSignupField(emailInput);
+  const passwordValid = validateSignupField(passwordInput);
+  const confirmValid = validateSignupField(confirmPasswordInput);
+
+  // Validation des conditions
+  let termsValid = true;
+  const termsError = document.getElementById('termsError');
+  if (!termsInput.checked) {
+    termsValid = false;
+    termsError.textContent = 'Vous devez accepter les conditions';
+    termsError.classList.add('show');
+  } else {
+    termsError.classList.remove('show');
+  }
+
+  if (fullnameValid && emailValid && passwordValid && confirmValid && termsValid) {
+    // Enregistrement de l'utilisateur
+    registeredUsers.push({
+      email: emailInput.value,
+      password: passwordInput.value,
+      fullname: fullnameInput.value
+    });
+
+    // Affichage du message de succès
+    signupForm.style.display = 'none';
+    successMessage.classList.add('show');
+    
+    // Redirection après 2 secondes
+    setTimeout(() => {
+      loginForm.style.display = 'block';
+      successMessage.classList.remove('show');
+      signupForm.style.display = 'block';
+      signupForm.reset();
+      
+      // Passage à l'onglet connexion
+      tabButtons.forEach(b => b.classList.remove('active'));
+      tabButtons[1].classList.add('active');
+      headerTitle.textContent = 'Connexion';
+      headerDesc.textContent = 'Connectez-vous à votre compte';
+    }, 2000);
+  }
+});
+
+// ==========================================
+// AUTHENTIFICATION - CONNEXION
+// ==========================================
+
+const loginEmailInput = document.getElementById('loginEmail');
+const loginPasswordInput = document.getElementById('loginPassword');
+const toggleLoginPasswordBtn = document.getElementById('toggleLoginPassword');
+const rememberMeInput = document.getElementById('rememberMe');
+
+// Affichage/Masquage du mot de passe - Connexion
+toggleLoginPasswordBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  const type = loginPasswordInput.type === 'password' ? 'text' : 'password';
+  loginPasswordInput.type = type;
+  toggleLoginPasswordBtn.textContent = type === 'password' ? '👁️' : '🙈';
+});
+
+// Validation au blur
+loginEmailInput.addEventListener('blur', () => validateLoginField(loginEmailInput));
+loginPasswordInput.addEventListener('blur', () => validateLoginField(loginPasswordInput));
+
+function validateLoginField(field) {
+  const errorElement = document.getElementById(field.id + 'Error');
+  let isValid = true;
+  let errorMsg = '';
+
+  if (field.id === 'loginEmail') {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!field.value.trim()) {
+      isValid = false;
+      errorMsg = 'L\'adresse e-mail est requise';
+    } else if (!emailRegex.test(field.value)) {
+      isValid = false;
+      errorMsg = 'Veuillez entrer une adresse e-mail valide';
+    }
+  }
+
+  if (field.id === 'loginPassword') {
+    if (!field.value) {
+      isValid = false;
+      errorMsg = 'Le mot de passe est requis';
+    }
+  }
+
+  if (isValid) {
+    field.classList.remove('error');
+    field.classList.add('success');
+    errorElement.classList.remove('show');
+  } else {
+    field.classList.remove('success');
+    field.classList.add('error');
+    errorElement.textContent = errorMsg;
+    errorElement.classList.add('show');
+  }
+
+  return isValid;
+}
+
+loginForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  // Validation
+  const emailValid = validateLoginField(loginEmailInput);
+  const passwordValid = validateLoginField(loginPasswordInput);
+
+  if (emailValid && passwordValid) {
+    // Vérification des identifiants
+    const user = registeredUsers.find(
+      u => u.email === loginEmailInput.value && u.password === loginPasswordInput.value
+    );
+
+    if (user) {
+      // Connexion réussie
+      currentUser = user.fullname;
+      loginForm.style.display = 'none';
+      loginSuccessMessage.classList.add('show');
+      
+      setTimeout(() => {
+        showMainApp();
+        loginForm.style.display = 'block';
+        loginSuccessMessage.classList.remove('show');
+        loginForm.reset();
+        loginEmailInput.classList.remove('success', 'error');
+        loginPasswordInput.classList.remove('success', 'error');
+      }, 1500);
+    } else {
+      alert('Identifiants incorrects. Veuillez vérifier votre email et mot de passe.');
+    }
+  }
+});
+
+// ==========================================
+// VÉRIFICATION DE L'AUTHENTIFICATION
+// ==========================================
+
 function checkAuth() {
-  const storedUser = getStoredUser();
-  if (storedUser) {
-    currentUser = storedUser;
+  if (currentUser) {
     showMainApp();
   } else {
     showLogin();
   }
 }
 
-function getStoredUser() {
-  // Since localStorage is not available, we use a variable
-  return currentUser;
-}
-
 function showLogin() {
-  loginModal.classList.remove('hidden');
+  container.classList.remove('hidden');
   mainApp.classList.add('hidden');
 }
 
 function showMainApp() {
-  loginModal.classList.add('hidden');
+  container.classList.add('hidden');
   mainApp.classList.remove('hidden');
   userWelcome.textContent = `Bienvenue, ${currentUser}`;
   renderProjects();
   renderContacts();
 }
 
-loginForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const username = document.getElementById('username').value;
-  const password = document.getElementById('password').value;
-  
-  if (username === 'admin' && password === 'admin123') {
-    currentUser = username;
-    showMainApp();
-    loginForm.reset();
-  } else {
-    alert('Identifiants incorrects. Utilisez: admin / admin123');
-  }
-});
-
+// Déconnexion
 logoutBtn.addEventListener('click', () => {
   currentUser = null;
   showLogin();
+  loginForm.reset();
+  signupForm.reset();
+  tabButtons.forEach(b => b.classList.remove('active'));
+  tabButtons[0].classList.add('active');
+  headerTitle.textContent = 'Inscription';
+  headerDesc.textContent = 'Créez votre compte pour commencer';
+  signupForm.style.display = 'block';
+  loginForm.style.display = 'none';
+  loginEmailInput.classList.remove('success', 'error');
+  loginPasswordInput.classList.remove('success', 'error');
 });
 
-// Navigation
-function setupEventListeners() {
+// ==========================================
+// GESTION DE L'APPLICATION - NAVIGATION
+// ==========================================
+
+function setupAppEventListeners() {
   const navBtns = document.querySelectorAll('.nav-btn');
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const view = btn.dataset.view;
-      if (!view) return; // Sécurité supplémentaire
+      if (!view) return;
       
       switchView(view);
       
@@ -96,7 +400,7 @@ function setupEventListeners() {
     });
   });
   
-  // Add project
+  // Ajout de projet
   document.getElementById('addProjectBtn').addEventListener('click', () => {
     document.getElementById('addProjectModal').classList.remove('hidden');
   });
@@ -106,7 +410,7 @@ function setupEventListeners() {
     addProject();
   });
   
-  // Add contact
+  // Ajout de contact
   document.getElementById('addContactBtn').addEventListener('click', () => {
     document.getElementById('addContactModal').classList.remove('hidden');
   });
@@ -116,13 +420,17 @@ function setupEventListeners() {
     addContact();
   });
   
-  // Modal close buttons
+  // Boutons de fermeture des modales
   document.querySelectorAll('[data-modal]').forEach(btn => {
     btn.addEventListener('click', () => {
       const modalId = btn.dataset.modal;
       document.getElementById(modalId).classList.add('hidden');
     });
   });
+}
+
+function setupAuthEventListeners() {
+  // Déjà géré dans les sections inscription/connexion
 }
 
 function switchView(viewName) {
@@ -132,11 +440,16 @@ function switchView(viewName) {
   });
   
   const targetView = document.getElementById(`${viewName}View`);
-  targetView.classList.remove('hidden');
-  targetView.classList.add('active');
+  if (targetView) {
+    targetView.classList.remove('hidden');
+    targetView.classList.add('active');
+  }
 }
 
-// Projects
+// ==========================================
+// GESTION DES PROJETS
+// ==========================================
+
 function renderProjects() {
   const projectsList = document.getElementById('projectsList');
   projectsList.innerHTML = '';
@@ -162,6 +475,11 @@ function createProjectCard(project) {
     completed: 'Terminé'
   };
   
+  const collaboratorsList = contacts
+    .filter(contact => project.collaborators && project.collaborators.includes(contact.id))
+    .map(c => c.name)
+    .join(', ');
+
   const formattedDeadline = new Date(project.deadline).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
@@ -174,6 +492,7 @@ function createProjectCard(project) {
       <span class="project-status status-${project.status}">${statusLabels[project.status]}</span>
     </div>
     <p class="project-description">${project.description}</p>
+    ${collaboratorsList ? `<div class="project-collaborators"><strong>Collaborateurs:</strong> ${collaboratorsList}</div>` : ''}
     <div class="project-deadline">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -191,15 +510,26 @@ function createProjectCard(project) {
 function addProject() {
   const name = document.getElementById('projectName').value;
   const description = document.getElementById('projectDescription').value;
+  const collaboratorsInput = document.getElementById('projectCollaborators').value;
   const status = document.getElementById('projectStatus').value;
   const deadline = document.getElementById('projectDeadline').value;
   
+  // Conversion des noms de collaborateurs en IDs
+  const collaboratorIds = [];
+  collaboratorsInput.split(',').forEach(name => {
+    const contact = contacts.find(c => c.name.toLowerCase() === name.trim().toLowerCase());
+    if (contact) {
+      collaboratorIds.push(contact.id);
+    }
+  });
+  
   const newProject = {
-    id: projects.length + 1,
+    id: Math.max(...projects.map(p => p.id), 0) + 1,
     name,
     description,
     status,
-    deadline
+    deadline,
+    collaborators: collaboratorIds
   };
   
   projects.push(newProject);
@@ -209,7 +539,10 @@ function addProject() {
   document.getElementById('addProjectForm').reset();
 }
 
-// Contacts
+// ==========================================
+// GESTION DES CONTACTS
+// ==========================================
+
 function renderContacts() {
   const contactsList = document.getElementById('contactsList');
   contactsList.innerHTML = '';
@@ -268,7 +601,7 @@ function addContact() {
   const role = document.getElementById('contactRole').value;
   
   const newContact = {
-    id: contacts.length + 1,
+    id: Math.max(...contacts.map(c => c.id), 0) + 1,
     name,
     email,
     phone,
