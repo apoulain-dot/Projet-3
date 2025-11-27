@@ -103,12 +103,12 @@ echo '<!DOCTYPE html>
                     required
                 >
                 <label for="terms" class="terms-text">
-                    J'accepte les <a href="#" onclick="event.preventDefault()">conditions d'utilisation</a> et la <a href="#" onclick="event.preventDefault()">politique de confidentialité</a>
+                    Jaccepte les <a href="#" onclick="event.preventDefault()">conditions dutilisation</a> et la <a href="#" onclick="event.preventDefault()">politique de confidentialité</a>
                 </label>
             </div>
             <div class="error-message" id="termsError"></div>
 
-            <button type="submit" class="btn btn--primary btn--full-width">S'inscrire</button>
+            <button type="submit" class="btn btn--primary btn--full-width">Sinscrire</button>
         </form>
 
         <form id="loginForm" novalidate class="form-content" data-form="login" style="display: none;">
