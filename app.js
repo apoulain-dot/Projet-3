@@ -773,3 +773,5 @@ function addContact() {
   document.getElementById('addContactModal').classList.add('hidden');
   document.getElementById('addContactForm').reset();
 }
+
+

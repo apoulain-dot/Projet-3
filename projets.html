@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Gestion de Projet - Trello Style</title>
+    <link rel="stylesheet" href="styleprojet.css">
+</head>
+<!-- Modal pour ajouter une tâche -->
+<div id="taskModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modal-title">Nouvelle tâche</h3>
+            <button class="modal-close" aria-label="Fermer">&times;</button>
+        </div>
+        <form id="taskForm">
+            <div class="modal-body">
+                <label for="taskInput">Description de la tâche</label>
+                <input 
+                    type="text" 
+                    id="taskInput" 
+                    class="form-control" 
+                    placeholder="Ex: Finaliser le rapport..." 
+                    required 
+                    autofocus
+                />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-cancel">Annuler</button>
+                <button type="submit" class="btn btn--primary">Ajouter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>📊 Tableau de Gestion</h1>
+                <p>Organisez vos tâches avec drag-and-drop</p>
+            </div>
+        </div>
+
+        <div class="board" id="board">
+            <!-- Les colonnes seront générées par JavaScript -->
+        </div>
+    </div>
+
+    <script src="appprojets.js" defer></script>
+</body>
+</html>
