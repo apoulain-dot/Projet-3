@@ -1,4 +1,10 @@
-<!DOCTYPE html>
+<?php
+$servername = "localhost/phpmyadmin";  // ou l'adresse de votre serveur MySQL
+$username = "root";         // votre utilisateur MySQL
+$password = "";             // votre mot de passe MySQL
+$dbname = "gtf"; // nom de votre base
+
+echo '<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -298,3 +304,13 @@
     <script src="app.js" defer></script>
 </body>
 </html>
+";
+
+// Créer la connexion
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Vérifier la connexion
+if ($conn->connect_error) {
+    die("Connexion échouée : " . $conn->connect_error);
+}';
+?>
