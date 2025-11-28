@@ -591,6 +591,14 @@ function createProjectCard(project) {
         </svg>
         Modifier
       </button>
+      <button class="btn btn--sm btn--outline" data-open-project="${project.id}" style="flex: 1;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v6"></path>
+          <path d="M12 22v-6"></path>
+          <path d="M4 12h16"></path>
+        </svg>
+        Ouvrir
+      </button>
       <button class="btn btn--sm btn--secondary" data-delete-project="${project.id}" style="flex: 1;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="3 6 5 6 21 6"></polyline>
@@ -605,11 +613,18 @@ function createProjectCard(project) {
 
   // Ajouter les event listeners pour les boutons
   const editBtn = card.querySelector(`[data-edit-project="${project.id}"]`);
+  const openBtn = card.querySelector(`[data-open-project="${project.id}"]`);
   const deleteBtn = card.querySelector(`[data-delete-project="${project.id}"]`);
 
   editBtn.addEventListener('click', () => {
     editProject(project.id);
   });
+
+  if (openBtn) {
+    openBtn.addEventListener('click', () => {
+      openProject(project.id);
+    });
+  }
 
   deleteBtn.addEventListener('click', () => {
     deleteProject(project.id);
@@ -647,6 +662,16 @@ function deleteProject(projectId) {
     projects = projects.filter(p => p.id !== projectId);
     renderProjects();
   }
+}
+
+function openProject(projectId) {
+  // Stocke l'id du projet et navigue vers la page Kanban
+  try {
+    localStorage.setItem('currentProjectId', projectId);
+  } catch (e) {
+    // ignore storage errors
+  }
+  window.location.href = 'projets.html';
 }
 
 function resetProjectForm() {
