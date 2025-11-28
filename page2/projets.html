@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion de Projets - Kanban</title>
+    <link rel="stylesheet" href="styleprojet.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="container">
+            <div class="header-content">
+                <button class="btnGTF">Guardia Task Force</button>
+                <div class="header-actions">
+                    <span id="userWelcome" class="user-welcome"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>📊 Gestion de Projets</h1>
+                <p>Organisez vos tâches et collaborez en temps réel</p>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <!-- Barre latérale des participants -->
+            <div class="sidebar-participants">
+                <h2>👥 Équipe</h2>
+                <div class="participants-list" id="participantsList"></div>
+            </div>
+
+            <!-- Zone principale du tableau -->
+            <div class="board-container">
+                <div class="board" id="board"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de création/modification de tâche -->
+    <div class="modal-overlay hidden" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Créer une nouvelle tâche</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label for="taskInput">Titre de la tâche</label>
+                        <input type="text" id="taskInput" placeholder="Entrez le titre..." required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="taskDescription">Description</label>
+                        <textarea id="taskDescription" placeholder="Décrivez la tâche..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="taskPriority">Degré d'urgence</label>
+                        <div class="priority-container">
+                            <input type="range" id="taskPriority" min="1" max="5" value="3" class="priority-slider">
+                            <div class="priority-labels">
+                                <span>Basse</span>
+                                <span>Haute</span>
+                            </div>
+                            <div class="priority-indicator">
+                                <span id="priorityValue">3</span> / 10
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Assignés</label>
+                        <div class="members-list" id="membersList"></div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-cancel">Annuler</button>
+                        <button type="button" id="deleteTaskBtn" class="btn-delete hidden">Supprimer</button>
+                        <button type="submit" id="submitBtn" class="btn-submit">Créer la tâche</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="appprojets.js"></script>
+</body>
+</html>
