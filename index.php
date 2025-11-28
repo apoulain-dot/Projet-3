@@ -1,17 +1,23 @@
 <?php
-$servername = "localhost/phpmyadmin";  // ou l'adresse de votre serveur MySQL
-$username = "root";         // votre utilisateur MySQL
-$password = "";             // votre mot de passe MySQL
-$dbname = "gtf"; // nom de votre base
+// Connexion à la base de données
+try {
+    $bdd = new PDO('mysql:host=localhost;dbname=gtf;charset=utf8;', 'root', '');
+    $bdd->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (Exception $e) {
+    die('Erreur : ' . $e->getMessage());
+}
 
-echo '<!DOCTYPE html>
+// Requête
+$requete = $bdd->query("SELECT * FROM users");
+?>
+
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion de Projets</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="php" href="connexion.php">
 </head>
 <body>
     <!-- Page de connexion -->
@@ -103,12 +109,12 @@ echo '<!DOCTYPE html>
                     required
                 >
                 <label for="terms" class="terms-text">
-                    Jaccepte les <a href="#" onclick="event.preventDefault()">conditions dutilisation</a> et la <a href="#" onclick="event.preventDefault()">politique de confidentialité</a>
+                    J'accepte les <a href="#" onclick="event.preventDefault()">conditions d'utilisation</a> et la <a href="#" onclick="event.preventDefault()">politique de confidentialité</a>
                 </label>
             </div>
             <div class="error-message" id="termsError"></div>
 
-            <button type="submit" class="btn btn--primary btn--full-width">Sinscrire</button>
+            <button type="submit" class="btn btn--primary btn--full-width">S'inscrire</button>
         </form>
 
         <form id="loginForm" novalidate class="form-content" data-form="login" style="display: none;">
@@ -304,13 +310,3 @@ echo '<!DOCTYPE html>
     <script src="app.js" defer></script>
 </body>
 </html>
-";
-
-// Créer la connexion
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Vérifier la connexion
-if ($conn->connect_error) {
-    die("Connexion échouée : " . $conn->connect_error);
-}';
-?>

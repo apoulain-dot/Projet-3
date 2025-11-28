@@ -2,6 +2,53 @@
 // GESTION D'ÉTAT (State Management)
 // ==========================================
 
+document.getElementById("signupForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const data = {
+        fullname: document.getElementById("fullname").value,
+        email: document.getElementById("email").value,
+        password: document.getElementById("password").value
+    };
+
+    const response = await fetch("signup.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (result.status === "success") {
+        document.getElementById("successMessage").style.display = "block";
+    }
+});
+
+
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const data = {
+        email: document.getElementById("loginEmail").value,
+        password: document.getElementById("loginPassword").value
+    };
+
+    const response = await fetch("login.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (result.status === "success") {
+        document.getElementById("loginSuccessMessage").style.display = "block";
+        document.getElementById("userWelcome").innerText =
+            "Bienvenue " + result.fullname;
+    }
+});
+
+
 let currentUser = null;
 let projects = [
   {
@@ -773,3 +820,86 @@ function addContact() {
   document.getElementById('addContactModal').classList.add('hidden');
   document.getElementById('addContactForm').reset();
 }
+
+// --- Inscription ---
+document.getElementById('signupForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const data = new FormData(this);
+    data.append('action', 'signup');
+
+    fetch('connexion.php', {method:'POST', body:data})
+    .then(res=>res.json())
+    .then(res=>{
+        alert(res.message);
+        if(res.success){
+            document.querySelector('.tab-btn[data-tab="login"]').click();
+        }
+    });
+});
+
+// --- Connexion ---
+document.getElementById('loginForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const data = new FormData(this);
+    data.append('action', 'login');
+
+    fetch('connexion.php', {method:'POST', body:data})
+    .then(res=>res.json())
+    .then(res=>{
+        if(res.success){
+            currentUser = res.user;
+            document.getElementById('userWelcome').textContent = `Bonjour ${currentUser.full_name}`;
+            document.querySelector('.container').style.display = 'none';
+            document.getElementById('mainApp').classList.remove('hidden');
+            loadProjects();
+        } else {
+            alert(res.message);
+        }
+    });
+});
+
+// --- Déconnexion ---
+document.getElementById('logoutBtn').addEventListener('click', ()=>{
+    currentUser = null;
+    document.getElementById('mainApp').classList.add('hidden');
+    document.querySelector('.container').style.display = 'block';
+});
+
+// --- Charger projets ---
+function loadProjects(){
+    const data = new FormData();
+    data.append('action','getProjects');
+    fetch('projects.php',{method:'POST', body:data})
+    .then(res=>res.json())
+    .then(projects=>{
+        const container = document.getElementById('projectsList');
+        container.innerHTML = '';
+        projects.forEach(p=>{
+            const div = document.createElement('div');
+            div.className = 'project-card';
+            div.innerHTML = `<h3>${p.name}</h3><p>${p.description}</p><p>Status: ${p.status}</p>`;
+            container.appendChild(div);
+        });
+    });
+}
+
+// --- Ajouter projet ---
+document.getElementById('addProjectForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const data = new FormData();
+    data.append('action','addProject');
+    data.append('name', document.getElementById('projectName').value);
+    data.append('description', document.getElementById('projectDescription').value);
+    data.append('status', document.getElementById('projectStatus').value);
+    data.append('deadline', document.getElementById('projectDeadline').value);
+
+    fetch('projects.php',{method:'POST', body:data})
+    .then(res=>res.json())
+    .then(res=>{
+        if(res.success){
+            alert('Projet ajouté !');
+            document.getElementById('addProjectModal').classList.add('hidden');
+            loadProjects();
+        } else alert(res.message);
+    });
+});
