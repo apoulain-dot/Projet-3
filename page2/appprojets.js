@@ -315,7 +315,7 @@ function createColumnElement(column) {
 
   div.appendChild(addTaskBtn);
 
-  // Support du drag-drop pour les tâches ET les participants
+  // Support du drag-drop pour les tâches et les participants
   tasksContainer.addEventListener('dragover', (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = draggedMember ? 'copy' : 'move';
@@ -346,7 +346,7 @@ function createColumnElement(column) {
   return div;
 }
 
-// Créer un élément de tâche
+// Créer une tâche
 function createTaskElement(task, columnId) {
   const div = document.createElement('div');
   div.className = 'task';
@@ -546,3 +546,4 @@ function setupDragDrop() {
 
 // Initialiser l'application
 init();
+

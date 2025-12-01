@@ -1,5 +1,5 @@
 :root {
-  /* Primitive Color Tokens */
+/* Primitive Color Tokens */
   --color-white: rgba(255, 255, 255, 1);
   --color-black: rgba(0, 0, 0, 1);
   --color-cream-50: rgba(252, 252, 249, 1);
@@ -309,8 +309,8 @@ html {
 }
 
 body {
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
 }
 
 *,
@@ -551,13 +551,11 @@ select.form-control {
   padding: var(--space-16);
 }
 
-.card__header,
-.card__footer {
+.card__header,.card__footer {
   padding: var(--space-16);
   border-bottom: 1px solid var(--color-card-border-inner);
 }
 
-/* Status indicators - simplified with CSS variables */
 .status {
   display: inline-flex;
   align-items: center;
@@ -613,28 +611,7 @@ select.form-control {
   margin-right: auto;
   margin-left: auto;
   padding-right: var(--space-16);
-  padding-left: var(--space-12);
-}
-
-@media (min-width: 640px) {
-  .container {
-    max-width: var(--container-sm);
-  }
-}
-@media (min-width: 768px) {
-  .container {
-    max-width: var(--container-md);
-  }
-}
-@media (min-width: 1024px) {
-  .container {
-    max-width: var(--container-lg);
-  }
-}
-@media (min-width: 1280px) {
-  .container {
-    max-width: var(--container-xl);
-  }
+  padding-left: var(--space-16);
 }
 
 /* Utility classes */
@@ -736,6 +713,7 @@ select.form-control {
   src: url('https://r2cdn.perplexity.ai/fonts/FKGroteskNeue.woff2')
     format('woff2');
 }
+
 
 * {
   margin: 0;
@@ -1111,7 +1089,7 @@ body {
   position: relative;
   color: var(--color-text);
   background-color: var(--color-background);
-
+  padding-bottom: 1%;
 }
 
 .btn-add-column:hover {
