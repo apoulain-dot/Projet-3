@@ -39,12 +39,26 @@
         </div>
     </div>
 
+    <!-- Section Archives -->
+        <div class="archive-section">
+            <div class="archive-header">
+                <h2>📦 Archive</h2>
+                <button class="btn-toggle-archive" onclick="toggleArchive()">Afficher les archives</button>
+            </div>
+            <div class="archive-content" id="archiveContent">
+                <div id="archiveList" class="archive-list">
+                    <div class="archive-empty">Aucune tâche archivée pour le moment</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de création/modification de tâche -->
     <div class="modal-overlay hidden" id="taskModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTitle">Créer une nouvelle tâche</h3>
-                <button class="modal-close">&times;</button>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="taskForm">
@@ -59,13 +73,9 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="taskPriority">Degré d'urgence</label>
+                        <label for="taskPriority">Degré d'urgence (1-10)</label>
                         <div class="priority-container">
-                            <input type="range" id="taskPriority" min="1" max="5" value="3" class="priority-slider">
-                            <div class="priority-labels">
-                                <span>Basse</span>
-                                <span>Haute</span>
-                            </div>
+                            <input type="range" id="taskPriority" min="1" max="10" value="3" class="priority-slider">
                             <div class="priority-indicator">
                                 <span id="priorityValue">3</span> / 10
                             </div>
@@ -77,9 +87,15 @@
                         <div class="members-list" id="membersList"></div>
                     </div>
 
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="taskCompleted"> ✅ Marquer comme terminée
+                        </label>
+                    </div>
+
                     <div class="modal-footer">
-                        <button type="button" class="btn-cancel">Annuler</button>
-                        <button type="button" id="deleteTaskBtn" class="btn-delete hidden">Supprimer</button>
+                        <button type="button" class="btn-cancel" onclick="closeModal()">Annuler</button>
+                        <button type="button" id="deleteTaskBtn" class="btn-delete hidden" onclick="deleteCurrentTask()">Supprimer</button>
                         <button type="submit" id="submitBtn" class="btn-submit">Créer la tâche</button>
                     </div>
                 </form>
