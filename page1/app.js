@@ -362,30 +362,41 @@ loginForm.addEventListener('submit', (e) => {
   const emailValid = validateLoginField(loginEmailInput);
   const passwordValid = validateLoginField(loginPasswordInput);
 
-  if (emailValid && passwordValid) {
-    // Vérification des identifiants
-    const user = registeredUsers.find(
-      u => u.email === loginEmailInput.value && u.password === loginPasswordInput.value
-    );
+  if (!emailValid || !passwordValid) return;
 
-    if (user) {
-      // Connexion réussie
-      currentUser = user.fullname;
-      loginForm.style.display = 'none';
-      loginSuccessMessage.classList.add('show');
-      
-      setTimeout(() => {
-        showMainApp();
-        loginForm.style.display = 'block';
-        loginSuccessMessage.classList.remove('show');
-        loginForm.reset();
-        loginEmailInput.classList.remove('success', 'error');
-        loginPasswordInput.classList.remove('success', 'error');
-      }, 1500);
-    } else {
-      alert('Identifiants incorrects. Veuillez vérifier votre email et mot de passe.');
-    }
-  }
+  const userData = {
+    email: loginEmailInput.value,
+    password: loginPasswordInput.value
+  };
+
+  fetch('../login.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userData)
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'success') {
+        currentUser = data.full_name;   // ou data.user_id si tu veux
+        loginForm.style.display = 'none';
+        loginSuccessMessage.classList.add('show');
+
+        setTimeout(() => {
+          showMainApp();
+          loginForm.style.display = 'block';
+          loginSuccessMessage.classList.remove('show');
+          loginForm.reset();
+          loginEmailInput.classList.remove('success', 'error');
+          loginPasswordInput.classList.remove('success', 'error');
+        }, 1500);
+      } else {
+        alert(data.message || 'Identifiants invalides');
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Erreur de connexion au serveur');
+    });
 });
 
 // ==========================================
