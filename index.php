@@ -14,8 +14,8 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion de Projets</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="app.js" defer></script>
+    <link rel="stylesheet" href="page1/style.css">
+    <script src="page1/app.js" defer></script>
 </head>
 <body>
     <!-- Page de connexion -->

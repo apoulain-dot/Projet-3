@@ -11,9 +11,9 @@ require 'config.php'; // doit définir $bdd (PDO)
 
 $data = json_decode(file_get_contents('php://input'), true);
 
-$fullname = trim($data['fullname'] ?? '');
+$fullname = trim($data['full_name'] ?? '');
 $email    = trim($data['email'] ?? '');
-$password = $data['password'] ?? '';
+$password = $data['mdp'] ?? '';
 
 if ($fullname === '' || $email === '' || $password === '') {
     echo json_encode(["status" => "error", "message" => "Champs manquants"]);
@@ -40,12 +40,12 @@ try {
 
     // Insertion
     $stmt = $bdd->prepare(
-        "INSERT INTO users (fullname, email, password) VALUES (:fullname, :email, :password)"
+        "INSERT INTO users (full_name, email, password) VALUES (:full_name, :email, :password)"
     );
     $stmt->execute([
-        ':fullname' => $fullname,
+        ':full_name' => $full_name,
         ':email'    => $email,
-        ':password' => $hashedPassword
+        ':mdp' => $hashedPassword
     ]);
 
     echo json_encode(["status" => "success", "message" => "Inscription réussie"]);
