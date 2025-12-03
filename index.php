@@ -7,7 +7,6 @@ try {
 }
 ?>
 
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -15,7 +14,6 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion de Projets</title>
     <link rel="stylesheet" href="page1/style.css">
-    <script src="page1/app.js" defer></script>
 </head>
 <body>
     <!-- Page de connexion -->
@@ -24,7 +22,6 @@ try {
             <button class="tab-btn active" data-tab="signup">Inscription</button>
             <button class="tab-btn" data-tab="login">Connexion</button>
         </div>
-
         <div class="header">
             <h1 id="headerTitle">Inscription</h1>
             <p id="headerDesc">Créez votre compte pour commencer</p>
@@ -46,7 +43,7 @@ try {
                     id="fullname" 
                     name="fullname" 
                     class="form-control"
-                    placeholder="Jean Dupont"
+                    placeholder="Prénom Nom"
                     required
                 >
                 <div class="error-message" id="fullnameError"></div>
@@ -141,7 +138,7 @@ try {
                         required
                     >
                     <button type="button" class="toggle-password" id="toggleLoginPassword" aria-label="Afficher/Masquer le mot de passe">
-                        👁️
+                    <i class="fi fi-rr-eye"></i>
                     </button>
                 </div>
                 <div class="error-message" id="loginPasswordError"></div>
@@ -305,6 +302,6 @@ try {
         </div>
     </div>
 
-    <script src="app.js" defer></script>
+    <script src="page1/app.js" defer></script>
 </body>
 </html>
