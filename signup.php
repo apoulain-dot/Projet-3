@@ -11,7 +11,7 @@ require 'config.php'; // doit définir $bdd (PDO)
 
 $data = json_decode(file_get_contents('php://input'), true);
 
-$fullname = trim($data['fullname'] ?? '');
+$fullname = trim($data['full_name'] ?? '');
 $email    = trim($data['email'] ?? '');
 $password = $data['password'] ?? '';        
 

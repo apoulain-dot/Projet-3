@@ -7,7 +7,6 @@ try {
 }
 ?>
 
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -24,7 +23,6 @@ try {
             <button class="tab-btn active" data-tab="signup">Inscription</button>
             <button class="tab-btn" data-tab="login">Connexion</button>
         </div>
-
         <div class="header">
             <h1 id="headerTitle">Inscription</h1>
             <p id="headerDesc">Créez votre compte pour commencer</p>
@@ -46,7 +44,7 @@ try {
                     id="fullname" 
                     name="full_name"
                     class="form-control"
-                    placeholder="Jean Dupont"
+                    placeholder="Prénom Nom"
                     required
                 >
                 <div class="error-message" id="fullnameError"></div>
@@ -141,7 +139,7 @@ try {
                         required
                     >
                     <button type="button" class="toggle-password" id="toggleLoginPassword" aria-label="Afficher/Masquer le mot de passe">
-                        👁️
+                    <i class="fi fi-rr-eye"></i>
                     </button>
                 </div>
                 <div class="error-message" id="loginPasswordError"></div>
@@ -304,7 +302,6 @@ try {
             </form>
         </div>
     </div>
-
 
 </body>
 </html>
