@@ -214,14 +214,14 @@
   --color-gray-200-rgb: 245, 245, 245;
 
   /* Colorful background palette - Dark Mode */
-  --color-bg-1: rgba(29, 78, 216, 0.15); /* Dark blue */
-  --color-bg-2: rgba(180, 83, 9, 0.15); /* Dark yellow */
-  --color-bg-3: rgba(21, 128, 61, 0.15); /* Dark green */
-  --color-bg-4: rgba(185, 28, 28, 0.15); /* Dark red */
-  --color-bg-5: rgba(107, 33, 168, 0.15); /* Dark purple */
-  --color-bg-6: rgba(194, 65, 12, 0.15); /* Dark orange */
-  --color-bg-7: rgba(190, 24, 93, 0.15); /* Dark pink */
-  --color-bg-8: rgba(8, 145, 178, 0.15); /* Dark cyan */
+  --color-bg-1: rgba(29, 78, 216, 0.15);
+  --color-bg-2: rgba(180, 83, 9, 0.15);
+  --color-bg-3: rgba(21, 128, 61, 0.15);
+  --color-bg-4: rgba(185, 28, 28, 0.15);
+  --color-bg-5: rgba(107, 33, 168, 0.15);
+  --color-bg-6: rgba(194, 65, 12, 0.15);
+  --color-bg-7: rgba(190, 24, 93, 0.15);
+  --color-bg-8: rgba(8, 145, 178, 0.15);
 
   /* Semantic Color Tokens (Dark Mode) */
   --color-background: var(--color-charcoal-700);
@@ -922,8 +922,8 @@ body {
 }
 
 /* ==========================================
-   FORMULAIRE INSCRIPTION/CONNEXION
-   ========================================== */
+    FORMULAIRE INSCRIPTION/CONNEXION
+============================================= */
 
 body.auth-view {
     display: flex;
@@ -1171,8 +1171,8 @@ label {
 }
 
 /* ==========================================
-   BOUTONS
-   ========================================== */
+    BOUTONS
+============================================= */
 
 .btn {
     display: inline-flex;
@@ -1240,8 +1240,8 @@ label {
 }
 
 /* ==========================================
-   APPLICATION PRINCIPALE - HEADER
-   ========================================== */
+    APPLICATION PRINCIPALE - HEADER
+============================================= */
 
 .app-header {
     background: var(--color-surface);
@@ -1278,8 +1278,8 @@ label {
 }
 
 /* ==========================================
-   APPLICATION PRINCIPALE - NAVIGATION
-   ========================================== */
+    APPLICATION PRINCIPALE - NAVIGATION
+============================================= */
 
 .app-nav {
     background: var(--color-surface);
@@ -1328,8 +1328,8 @@ label {
 }
 
 /* ==========================================
-   APPLICATION PRINCIPALE - CONTENU
-   ========================================== */
+    APPLICATION PRINCIPALE - CONTENU
+============================================= */
 
 .app-main {
     padding: var(--space-32) 0;
@@ -1367,8 +1367,8 @@ label {
 }
 
 /* ==========================================
-   GRILLE DES PROJETS
-   ========================================== */
+    GRILLE DES PROJETS
+============================================= */
 
 .projects-grid {
     display: grid;
@@ -1463,8 +1463,8 @@ label {
 }
 
 /* ==========================================
-   GRILLE DES CONTACTS
-   ========================================== */
+    GRILLE DES CONTACTS
+============================================= */
 
 .contacts-grid {
     display: grid;
@@ -1546,8 +1546,8 @@ label {
 }
 
 /* ==========================================
-   MODALES
-   ========================================== */
+    MODAL
+============================================= */
 
 .modal {
     display: flex;
@@ -1666,8 +1666,7 @@ label {
         width: 100%;
     }
 
-    .projects-grid,
-    .contacts-grid {
+    .projects-grid, .contacts-grid {
         grid-template-columns: 1fr;
     }
 
@@ -1797,14 +1796,12 @@ label {
         padding: var(--space-24) 0;
     }
 
-    .projects-grid,
-    .contacts-grid {
+    .projects-grid, .contacts-grid {
         gap: var(--space-16);
         grid-template-columns: 1fr;
     }
 
-    .project-card,
-    .contact-card {
+    .project-card, .contact-card {
         padding: var(--space-16);
     }
 

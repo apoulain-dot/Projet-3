@@ -116,7 +116,7 @@ const strengthBar = document.getElementById('strengthBar');
 passwordInput.addEventListener('input', () => {
   const value = passwordInput.value;
   let strength = 0;
-  
+    
   if (value.length >= 8) strength++;
   if (/[a-z]/.test(value) && /[A-Z]/.test(value)) strength++;
   if (/[0-9]/.test(value)) strength++;
@@ -227,6 +227,49 @@ signupForm.addEventListener('submit', (e) => {
   }
 
   if (fullnameValid && emailValid && passwordValid && confirmValid && termsValid) {
+
+    const userData = {
+    fullname: fullnameInput.value,
+    email: emailInput.value,
+    password: passwordInput.value
+};
+        
+fetch('../signup.php', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(userData)
+})
+.then(response => response.json())
+.then(data => {
+    if (data.status === 'success') {
+        // Succès : afficher le message
+        signupForm.style.display = 'none';
+        successMessage.classList.add('show');
+        
+        // Redirection après 2 secondes
+        setTimeout(() => {
+            loginForm.style.display = 'block';
+            successMessage.classList.remove('show');
+            signupForm.style.display = 'block';
+            signupForm.reset();
+            
+            // Passage à l'onglet connexion
+            tabButtons.forEach(b => b.classList.remove('active'));
+            tabButtons[1].classList.add('active');
+            headerTitle.textContent = 'Connexion';
+            headerDesc.textContent = 'Connectez-vous à votre compte';
+        }, 2000);
+    } else {
+        // Erreur du serveur
+        alert('Erreur : ' + (data.message || 'Une erreur est survenue'));
+    }
+})
+.catch(error => {
+    console.error('Erreur:', error);
+    alert('Erreur de connexion au serveur');
+});
     // Enregistrement de l'utilisateur
     registeredUsers.push({
       email: emailInput.value,

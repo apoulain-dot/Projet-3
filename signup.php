@@ -43,7 +43,7 @@ try {
     // Hash du mot de passe
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-    // Insertion dans ta table: id, full_name, email, mdp
+    // Insertion dans ta table
     $stmt = $bdd->prepare(
         "INSERT INTO users (full_name, email, mdp) VALUES (:full_name, :email, :mdp)"
     );
