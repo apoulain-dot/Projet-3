@@ -1,15 +1,12 @@
 <?php
-// Connexion à la base de données
 try {
-    $bdd = new PDO('mysql:host=localhost;dbname=gtf;charset=utf8;', 'root', '');
+    $bdd = new PDO('mysql:host=localhost;dbname=gtf;charset=utf8', 'root', '');
     $bdd->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (Exception $e) {
-    die('Erreur : ' . $e->getMessage());
+    die('Erreur BDD : ' . $e->getMessage());
 }
-
-// Requête
-$requete = $bdd->query("SELECT * FROM users");
 ?>
+
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -18,6 +15,7 @@ $requete = $bdd->query("SELECT * FROM users");
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion de Projets</title>
     <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
 </head>
 <body>
     <!-- Page de connexion -->

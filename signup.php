@@ -1,13 +1,55 @@
 <?php
-require 'config.php';
+header('Content-Type: application/json');
 
-$data = json_decode(file_get_contents("php://input"), true);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(["status" => "error", "message" => "Méthode non autorisée"]);
+    exit;
+}
 
-$fullname = $data['fullname'];
-$email = $data['email'];
-$password = password_hash($data['password'], PASSWORD_DEFAULT);
+require 'config.php'; // doit définir $bdd (PDO)
 
-$stmt = $bdd->prepare("INSERT INTO utilisateurs (fullname, email, password) VALUES (?, ?, ?)");
-$stmt->execute([$fullname, $email, $password]);
+$data = json_decode(file_get_contents('php://input'), true);
 
-echo json_encode(["status" => "success"]);
+$fullname = trim($data['fullname'] ?? '');
+$email    = trim($data['email'] ?? '');
+$password = $data['password'] ?? '';
+
+if ($fullname === '' || $email === '' || $password === '') {
+    echo json_encode(["status" => "error", "message" => "Champs manquants"]);
+    exit;
+}
+
+// Vérification email basique
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    echo json_encode(["status" => "error", "message" => "Email invalide"]);
+    exit;
+}
+
+try {
+    // Vérifier si l'email existe déjà
+    $check = $bdd->prepare("SELECT id FROM users WHERE email = ?");
+    $check->execute([$email]);
+    if ($check->fetch()) {
+        echo json_encode(["status" => "error", "message" => "Email déjà utilisé"]);
+        exit;
+    }
+
+    // Hash du mot de passe
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT); // [web:41]
+
+    // Insertion
+    $stmt = $bdd->prepare(
+        "INSERT INTO users (fullname, email, password) VALUES (:fullname, :email, :password)"
+    );
+    $stmt->execute([
+        ':fullname' => $fullname,
+        ':email'    => $email,
+        ':password' => $hashedPassword
+    ]);
+
+    echo json_encode(["status" => "success", "message" => "Inscription réussie"]);
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "Erreur serveur"]);
+}
