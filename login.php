@@ -8,28 +8,31 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-require 'config.php'; // doit définir $bdd (PDO)
+require 'config.php'; // $bdd (PDO)
 
 $data = json_decode(file_get_contents('php://input'), true);
 
-$email = $data['email'] ?? '';
+// Le JS envoie { email: "...", password: "..." }
+$email    = trim($data['email'] ?? '');
 $password = $data['password'] ?? '';
 
-if (empty($email) || empty($password)) {
+if ($email === '' || $password === '') {
     echo json_encode(["status" => "error", "message" => "Email ou mot de passe manquant"]);
     exit;
 }
 
 try {
-    $stmt = $bdd->prepare("SELECT id, fullname, email, password FROM users WHERE email = ?");
+    // La colonne du mot de passe dans ta BDD = mdp
+    $stmt = $bdd->prepare("SELECT id, full_name, email, mdp FROM users WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($user && password_verify($password, $user['password'])) {
+    // Vérification du hash stocké dans mdp
+    if ($user && password_verify($password, $user['mdp'])) {
         echo json_encode([
-            "status" => "success",
-            "fullname" => $user["fullname"],
-            "user_id" => $user["id"]
+            "status"    => "success",
+            "full_name" => $user["full_name"],
+            "user_id"   => $user["id"]
         ]);
     } else {
         echo json_encode(["status" => "error", "message" => "Identifiants invalides"]);

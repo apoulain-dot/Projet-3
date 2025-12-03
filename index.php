@@ -14,8 +14,8 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion de Projets</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="app.js" defer></script>
+    <link rel="stylesheet" href="page1/style.css">
+    <script src="page1/app.js" defer></script>
 </head>
 <body>
     <!-- Page de connexion -->
@@ -44,7 +44,7 @@ try {
                 <input 
                     type="text" 
                     id="fullname" 
-                    name="fullname" 
+                    name="full_name"
                     class="form-control"
                     placeholder="Jean Dupont"
                     required
@@ -71,7 +71,7 @@ try {
                     <input 
                         type="password" 
                         id="password" 
-                        name="password" 
+                        name="mdp" 
                         class="form-control"
                         placeholder="Minimum 8 caractères"
                         required
@@ -305,6 +305,6 @@ try {
         </div>
     </div>
 
-    <script src="app.js" defer></script>
+
 </body>
 </html>

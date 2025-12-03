@@ -13,9 +13,9 @@ $data = json_decode(file_get_contents('php://input'), true);
 
 $fullname = trim($data['fullname'] ?? '');
 $email    = trim($data['email'] ?? '');
-$password = $data['password'] ?? '';
+$password = $data['password'] ?? '';        
 
-if ($fullname === '' || $email === '' || $password === '') {
+if (empty($fullname) || empty($email) || empty($password)) {
     echo json_encode(["status" => "error", "message" => "Champs manquants"]);
     exit;
 }
@@ -39,14 +39,15 @@ try {
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT); // [web:41]
 
     // Insertion
-    $stmt = $bdd->prepare(
-        "INSERT INTO users (fullname, email, password) VALUES (:fullname, :email, :password)"
-    );
-    $stmt->execute([
-        ':fullname' => $fullname,
-        ':email'    => $email,
-        ':password' => $hashedPassword
-    ]);
+$stmt = $bdd->prepare(
+    "INSERT INTO users (full_name, email, mdp) VALUES (:full_name, :email, :mdp)"
+);
+
+$stmt->execute([
+    ':full_name' => $fullname,
+    ':email'     => $email,
+    ':mdp'       => $hashedPassword
+]);
 
     echo json_encode(["status" => "success", "message" => "Inscription réussie"]);
 } catch (PDOException $e) {

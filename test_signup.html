@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<body>
+<form id="test">
+  Nom: <input name="full_name"><br>
+  Email: <input name="email"><br>
+  MDP: <input name="mdp" type="password"><br>
+  <button type="submit">Test</button>
+</form>
+
+<script>
+document.getElementById('test').onsubmit = async (e) => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  const data = Object.fromEntries(formData);
+
+  try {
+    const response = await fetch('signup.php', {
+      method: 'POST', // très important
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+    alert(JSON.stringify(result, null, 2));
+    console.log(result);
+  } catch (err) {
+    alert('Erreur: ' + err);
+  }
+};
+</script>
+</body>
+</html>
