@@ -2,8 +2,9 @@
 // ==========================================
 // GESTION D'ÉTAT (State Management)
 // ==========================================
-
 let currentUser = null;
+let currentUserId = null; // ajouter cette variable globale
+
 let projects = [
   {
     id: 1,
@@ -377,7 +378,8 @@ loginForm.addEventListener('submit', (e) => {
     .then(res => res.json())
     .then(data => {
       if (data.status === 'success') {
-        currentUser = data.full_name;   // ou data.user_id si tu veux
+        currentUser = data.full_name;
+        currentUserId = data.user_id;
         loginForm.style.display = 'none';
         loginSuccessMessage.classList.add('show');
 
@@ -420,9 +422,32 @@ function showMainApp() {
   container.classList.add('hidden');
   mainApp.classList.remove('hidden');
   userWelcome.textContent = `Bienvenue, ${currentUser}`;
-  renderProjects();
-  renderContacts();
+  loadProjectsFromDB();
+  loadContactsFromDB();
 }
+
+function loadContactsFromDB() {
+  fetch('../get_contacts.php')
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'success') {
+        contacts = data.contacts.map(c => ({
+          id: parseInt(c.id, 10),
+          name: c.full_name,
+          email: c.email,
+          phone: c.phone,
+          role: c.role
+        }));
+        renderContacts();
+      } else {
+        console.error(data.message || 'Erreur lors du chargement des contacts');
+      }
+    })
+    .catch(err => {
+      console.error('Erreur fetch contacts:', err);
+    });
+}
+
 
 // Déconnexion
 logoutBtn.addEventListener('click', () => {
@@ -610,22 +635,27 @@ function createProjectCard(project) {
     inprogress: 'En cours',
     completed: 'Terminé'
   };
-  
+
+  // Sécuriser collaborators (les projets venant de la BDD n'ont pas forcément cette propriété)
   const collaboratorsList = contacts
-    .filter(contact => project.collaborators && project.collaborators.includes(contact.id))
+    .filter(contact => Array.isArray(project.collaborators) && project.collaborators.includes(contact.id))
     .map(c => c.name)
     .join(', ');
 
-  const formattedDeadline = new Date(project.deadline).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  });
+  // Utiliser date_limite (BDD) ou l'ancien deadline si présent
+  const rawDeadline = project.date_limite || project.deadline;
+  const formattedDeadline = rawDeadline
+    ? new Date(rawDeadline).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      })
+    : 'Aucune date';
   
   card.innerHTML = `
     <div class="project-header">
       <h3 class="project-title">${project.name}</h3>
-      <span class="project-status status-${project.status}">${statusLabels[project.status]}</span>
+      <span class="project-status status-${project.status}">${statusLabels[project.status] || project.status}</span>
     </div>
     <p class="project-description">${project.description}</p>
     ${collaboratorsList ? `<div class="project-collaborators"><strong>Collaborateurs:</strong> ${collaboratorsList}</div>` : ''}
@@ -671,9 +701,11 @@ function createProjectCard(project) {
   const openBtn = card.querySelector(`[data-open-project="${project.id}"]`);
   const deleteBtn = card.querySelector(`[data-delete-project="${project.id}"]`);
 
-  editBtn.addEventListener('click', () => {
-    editProject(project.id);
-  });
+  if (editBtn) {
+    editBtn.addEventListener('click', () => {
+      editProject(project.id);
+    });
+  }
 
   if (openBtn) {
     openBtn.addEventListener('click', () => {
@@ -681,12 +713,15 @@ function createProjectCard(project) {
     });
   }
 
-  deleteBtn.addEventListener('click', () => {
-    deleteProject(project.id);
-  });
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', () => {
+      deleteProject(project.id);
+    });
+  }
   
   return card;
 }
+
 
 function editProject(projectId) {
   const project = projects.find(p => p.id === projectId);
@@ -764,15 +799,18 @@ async function addOrUpdateProject() {
     description: description,
     status: status,
     date_limite: dateLimite,
-    contact_id: contactId
+    contact_id: contactId,
+    user_id: currentUserId,
   };
 
   try {
     const response = await fetch('add_project.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(projectData)
-    });
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(projectData)
+  });
 
     const data = await response.json();
 
@@ -792,14 +830,17 @@ async function addOrUpdateProject() {
 
 async function loadProjectsFromDB() {
   try {
-    const response = await fetch('get_projects.php');
+    const response = await fetch('get_projects.php?user_id=' + currentUserId);
     const data = await response.json();
-    projects = data;      // on remplace le tableau local
-    renderProjects();     // réaffiche la liste
+    projects = data;
+    renderProjects();
   } catch (error) {
     console.error('Erreur chargement projets:', error);
   }
 }
+
+
+
 
 
 // ==========================================
@@ -858,22 +899,48 @@ function createContactCard(contact) {
 }
 
 function addContact() {
-  const name = document.getElementById('contactName').value;
-  const email = document.getElementById('contactEmail').value;
-  const phone = document.getElementById('contactPhone').value;
-  const role = document.getElementById('contactRole').value;
-  
+  const nameInput = document.getElementById('contactName');
+  const emailInput = document.getElementById('contactEmail');
+  const phoneInput = document.getElementById('contactPhone');
+  const roleInput = document.getElementById('contactRole');
+
   const newContact = {
-    id: Math.max(...contacts.map(c => c.id), 0) + 1,
-    name,
-    email,
-    phone,
-    role
+    full_name: nameInput.value.trim(),
+    email: emailInput.value.trim(),
+    phone: phoneInput.value.trim(),
+    role: roleInput.value.trim()
   };
-  
-  contacts.push(newContact);
-  renderContacts();
-  
-  document.getElementById('addContactModal').classList.add('hidden');
-  document.getElementById('addContactForm').reset();
+
+  fetch('../add_contact.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newContact)
+  })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error('HTTP ' + res.status);
+      }
+      return res.json();
+    })
+    .then(data => {
+      if (data.status === 'success') {
+        const newId = contacts.length ? contacts[contacts.length - 1].id + 1 : 1;
+        contacts.push({
+          id: newId,
+          name: newContact.full_name,
+          email: newContact.email,
+          phone: newContact.phone,
+          role: newContact.role
+        });
+        renderContacts();
+        document.getElementById('addContactModal').classList.add('hidden');
+        document.getElementById('addContactForm').reset();
+      } else {
+        alert(data.message || 'Erreur lors de la création du contact');
+      }
+    })
+    .catch(err => {
+      console.error('Erreur addContact:', err);
+      alert('Erreur de connexion au serveur');
+    });
 }
