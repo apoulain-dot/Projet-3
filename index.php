@@ -5,6 +5,7 @@ try {
 } catch (Exception $e) {
     die('Erreur BDD : ' . $e->getMessage());
 }
+
 ?>
 
 <!DOCTYPE html>

@@ -1,0 +1,81 @@
+name: DevSecOps Pipeline
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+  security-ci:
+    name: Sécurité & CI
+    runs-on: ubuntu-latest
+
+    steps:
+      # --- 1. Checkout du code ---
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # --- 2. Installation PHP ---
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, mysqli
+          tools: composer, phpstan, phpcs
+
+      # --- 3. Installation Node.js ---
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # --- 4. Analyse SAST PHP ---
+      - name: PHPStan (Analyse statique PHP)
+        run: phpstan analyse src --level=max || true
+      
+      - name: Code Style PHP (PHPCS)
+        run: phpcs --standard=PSR12 src || true
+
+      # --- 5. Analyse SAST JavaScript ---
+      - name: Install ESLint
+        run: npm install eslint eslint-plugin-security --save-dev
+
+      - name: Run ESLint
+        run: npx eslint public/**/*.js || true
+
+      # --- 6. Audit dépendances PHP ---
+      - name: Composer Audit
+        run: composer install && composer audit || true
+
+      # --- 7. Audit dépendances JS ---
+      - name: NPM Audit
+        run: npm audit --audit-level=moderate || true
+
+      # --- 8. Scan de sécurité de l'image Docker (optionnel) ---
+      - name: Install Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+
+  deploy:
+    name: Déploiement vers XAMPP
+    runs-on: ubuntu-latest
+    needs: security-ci
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # --- Déploiement via FTP vers XAMPP ---
+      - name: Deploy to XAMPP via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftp
+          port: 21
+          local-dir: ./public
+          server-dir: /htdocs/
