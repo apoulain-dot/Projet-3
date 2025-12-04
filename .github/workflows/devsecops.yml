@@ -58,6 +58,26 @@ jobs:
           scan-type: fs
           scan-ref: .
 
+                # --- 9. Calcul du score de vulnérabilité ---
+      - name: Calcul du score de vulnérabilité
+        id: score
+        run: |
+          trivy fs . --format json > trivy-result.json || true
+
+          CRITICAL=$(jq '.Results[].Vulnerabilities[]? | select(.Severity=="CRITICAL") | length' trivy-result.json | wc -l)
+          HIGH=$(jq '.Results[].Vulnerabilities[]? | select(.Severity=="HIGH") | length' trivy-result.json | wc -l)
+          MEDIUM=$(jq '.Results[].Vulnerabilities[]? | select(.Severity=="MEDIUM") | length' trivy-result.json | wc -l)
+          LOW=$(jq '.Results[].Vulnerabilities[]? | select(.Severity=="LOW") | length' trivy-result.json | wc -l)
+
+          PENALITE=$((CRITICAL*15 + HIGH*10 + MEDIUM*5 + LOW*2))
+          SCORE=$((100 - PENALITE))
+
+          if [ $SCORE -lt 0 ]; then SCORE=0; fi
+
+          echo "Score de vulnérabilité : $SCORE / 100"
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+
+
   deploy:
     name: Déploiement vers XAMPP
     runs-on: ubuntu-latest
@@ -67,15 +87,3 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      # --- Déploiement via FTP vers XAMPP ---
-      - name: Deploy to XAMPP via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.0
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
-          port: 21
-          local-dir: ./public
-          server-dir: /htdocs/
