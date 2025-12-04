@@ -1,4 +1,7 @@
 <?php
+
+$projectId = isset($_GET['project_id']) ? (int)$_GET['project_id'] : 0;
+
 try {
     $bdd = new PDO('mysql:host=localhost;dbname=gtf;charset=utf8', 'root', '');
     $bdd->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -50,9 +53,8 @@ $userId = 1; // remplace par $_SESSION['user_id'] ou autre
             <!-- Zone principale du tableau -->
             <div class="board-container">
                 <!-- on passe l'id du projet au JS -->
-                <div class="board"
-                     id="board"
-                     data-project-id="<?php echo htmlspecialchars($projectId, ENT_QUOTES, 'UTF-8'); ?>">
+                <div id="board"
+                data-project-id="<?php echo htmlspecialchars($projectId, ENT_QUOTES, 'UTF-8'); ?>">
                 </div>
             </div>
         </div>

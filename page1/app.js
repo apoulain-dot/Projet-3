@@ -785,14 +785,17 @@ async function deleteProject(id) {
 
 
 function openProject(projectId) {
-  // Stocke l'id du projet et navigue vers la page Kanban
+  // Optionnel : garder aussi en localStorage
   try {
     localStorage.setItem('currentProjectId', projectId);
   } catch (e) {
-    // ignore storage errors
+    // ignore
   }
-  window.location.href = '../projets.php';
+
+  // Passer l'id dans l'URL pour que projets.php le récupère
+  window.location.href = '../projets.php?project_id=' + encodeURIComponent(projectId);
 }
+
 
 function resetProjectForm() {
   document.getElementById('addProjectForm').reset();
