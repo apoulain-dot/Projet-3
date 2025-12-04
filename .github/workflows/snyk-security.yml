@@ -23,14 +23,14 @@ jobs:
 
       - name: Set up Snyk CLI
         uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+       # env:
+          #SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       # Snyk Code (SAST) + export SARIF
       - name: Snyk Code test
         run: snyk code test --sarif > snyk-code.sarif || echo "Snyk code finished with exit code $?"
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+       # env:
+         # SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       # ❌ Snyk Open Source (SCA) désactivé car pas de composer.lock
       # - name: Snyk Open Source monitor (PHP)
@@ -41,17 +41,13 @@ jobs:
       # Snyk IaC
       - name: Snyk IaC test and report
         run: snyk iac test --report || echo "Snyk IaC finished with exit code $?"
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
-      # Build Docker image pour analyse container
-      - name: Build Docker image
-        run: docker build -t your/image-to-test .
+        #env:
+         # SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Snyk Container monitor
         run: snyk container monitor your/image-to-test --file=Dockerfile
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+       # env:
+         # SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       # Upload des résultats Snyk Code dans GitHub Code Scanning
       - name: Upload SARIF to GitHub Code Scanning
