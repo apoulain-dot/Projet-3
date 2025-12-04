@@ -34,28 +34,35 @@
       }));
   }
   // Initialiser l'application
-  function init() {
-      loadFromStorage();
-      renderParticipants();
-      renderMembersInModal();
-      renderBoard();
-      renderArchive();
-      setupModal();
-      setupDragDrop();
-      // Ajouter quelques tâches d'exemple si vide
-      if (state.columns[0].tasks.length === 0) {
-          state.columns[0].tasks.push(
-              { id: 'task-1', text: 'Concevoir la maquette du projet', description: 'Créer les wireframes et mockups', priority: 3, assignees: ['member-1'], completed: false },
-              { id: 'task-2', text: 'Réunion d\'équipe à 10h', description: 'Discuter du planning et des objectifs', priority: 2, assignees: ['member-1', 'member-2'], completed: false }
-          );
-          state.columns[1].tasks.push(
-              { id: 'task-3', text: 'Développer les fonctionnalités principales', description: 'API REST, authentification, CRUD', priority: 5, assignees: ['member-2', 'member-4'], completed: false },
-              { id: 'task-4', text: 'Tests des API', description: 'Tester tous les endpoints', priority: 4, assignees: ['member-3'], completed: false }
-          );
-          saveToStorage();
-      }
-      renderBoard();
+let currentProjectId = null;
+let currentUserId = null;
+
+function init() {
+  const boardEl = document.getElementById('board');
+  currentProjectId = parseInt(boardEl?.dataset.projectId || '0', 10);
+  console.log('currentProjectId =', currentProjectId);
+
+  if (window.currentUserId) {
+    currentUserId = window.currentUserId;
   }
+
+  if (currentProjectId > 0) {
+    loadBoardFromDB(currentProjectId);   // avec ../get_cards.php
+  } else {
+    renderBoard();
+  }
+
+  renderParticipants();
+  renderMembersInModal();
+  renderArchive();
+  setupModal();
+  setupDragDrop();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+});
+
   // Afficher les participants
   function renderParticipants() {
       const participantsList = document.getElementById('participantsList');
@@ -180,20 +187,27 @@
   }
   // Afficher le tableau
   function renderBoard() {
-      const board = document.getElementById('board');
-      board.innerHTML = '';
-      state.columns.forEach(column => {
-          board.appendChild(createColumnElement(column));
-      });
-      const addBtn = document.createElement('button');
-      addBtn.className = 'btn-add-column';
-      addBtn.textContent = '+ Ajouter une colonne';
-      addBtn.onclick = () => {
-          const title = prompt('Titre de la nouvelle colonne:');
-          if (title) addColumn(title);
-      };
-      board.appendChild(addBtn);
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+
+  if (!Array.isArray(state.columns)) {
+    state.columns = [];
   }
+
+  state.columns.forEach(column => {
+    board.appendChild(createColumnElement(column));
+  });
+
+  // Bouton pour ajouter une colonne
+  const addBtn = document.createElement('button');
+  addBtn.className = 'btn-add-column';
+  addBtn.textContent = '+ Ajouter une colonne';
+  addBtn.onclick = () => {
+    const title = prompt('Titre de la nouvelle colonne:');
+    if (title) addColumn(title);   // fonction async qui appelle add_list.php
+  };
+  board.appendChild(addBtn);
+}
   // Créer un élément de colonne
   function createColumnElement(column) {
       const div = document.createElement('div');
@@ -480,22 +494,95 @@
       }
   }
   // Ajouter une tâche
-  function addTask(columnId, text, description, priority, assignees, completed = false) {
-      const column = state.columns.find(c => c.id === columnId);
-      if (column) {
-          const task = {
-              id: 'task-' + Date.now(),
-              text,
-              description,
-              priority: priority || 3,
-              assignees,
-              completed
-          };
-          column.tasks.push(task);
-          saveToStorage();
-          renderBoard();
-      }
+async function addTask(columnId, text, desc, priority, assignees, completed) {
+  if (!currentProjectId) {
+    alert('Projet inconnu, impossible de créer la tâche.');
+    return;
   }
+
+  try {
+    const res = await fetch('../add_card.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title:       text,
+        description: desc,
+        list_id:     columnId,         
+        status:      completed ? 'done' : 'todo',
+        due_date:    null,
+        assigned_to: null,
+        contact_id:  null,
+        project_id:  currentProjectId
+      })
+    });
+    // ... le reste identique
+
+
+    const data = await res.json();
+    if (data.status !== 'success') {
+      alert(data.message || 'Erreur lors de la création de la carte');
+      return;
+    }
+
+    const newId = data.id;
+
+    const column = state.columns.find(c => c.id === columnId);
+    if (!column) return;
+
+    column.tasks.push({
+      id:         newId,
+      text:       text,
+      description: desc,
+      priority:   priority || 3,
+      assignees:  assignees || [],
+      completed:  !!completed
+    });
+
+    renderBoard();
+  } catch (e) {
+    console.error('Erreur addTask / add_card.php:', e);
+    alert('Erreur de connexion au serveur');
+  }
+}
+
+
+async function addColumn(title) {
+  // à adapter: boardId fixe ou récupéré depuis PHP
+  const boardId = 1;
+
+  try {
+    const res = await fetch('../add_list.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: title,
+        board_id: boardId,
+        position: state.columns.length + 1
+      })
+    });
+    const data = await res.json();
+    if (data.status !== 'success') {
+      alert(data.message || 'Erreur lors de la création de la colonne');
+      return;
+    }
+
+    const newListId = data.id;
+
+    state.columns.push({
+      id: newListId,       // lists.id réel
+      title: title,
+      tasks: []
+    });
+
+    renderBoard();
+  } catch (e) {
+    console.error('Erreur addColumn:', e);
+    alert('Erreur de connexion au serveur');
+  }
+}
+
+
+
   // Modifier une tâche
   function updateTask(taskId, text, description, priority, assignees, completed) {
       let task = null;
@@ -514,27 +601,44 @@
       }
   }
   // Déplacer une tâche
-  function moveTask(taskId, targetColumnId) {
-      let task = null;
-      let sourceColumnId = null;
-      state.columns.forEach(col => {
-          const index = col.tasks.findIndex(t => t.id === taskId);
-          if (index !== -1) {
-              task = col.tasks[index];
-              sourceColumnId = col.id;
-          }
-      });
-      if (task && sourceColumnId !== targetColumnId) {
-          const sourceColumn = state.columns.find(c => c.id === sourceColumnId);
-          const targetColumn = state.columns.find(c => c.id === targetColumnId);
-          if (sourceColumn && targetColumn) {
-              sourceColumn.tasks = sourceColumn.tasks.filter(t => t.id !== taskId);
-              targetColumn.tasks.push(task);
-              saveToStorage();
-              renderBoard();
-          }
-      }
+  // appprojets.js
+async function moveTask(taskId, targetColumnId) {
+  let task = null;
+
+  state.columns.forEach(col => {
+    const index = col.tasks.findIndex(t => t.id === taskId);
+    if (index !== -1) {
+      task = col.tasks[index];
+      col.tasks.splice(index, 1);
+    }
+  });
+
+  if (!task) return;
+
+  const targetColumn = state.columns.find(c => c.id === targetColumnId);
+  if (!targetColumn) return;
+
+  targetColumn.tasks.push(task);
+  renderBoard();
+
+  try {
+    const res = await fetch('../move_card.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: taskId,
+        list_id: targetColumnId    // lists.id
+      })
+    });
+    const data = await res.json();
+    if (data.status !== 'success') {
+      console.error('Erreur move_card:', data.message);
+    }
+  } catch (e) {
+    console.error('Erreur moveTask:', e);
   }
+}
+
   // Ajouter une colonne
   function addColumn(title) {
       const column = {
@@ -580,5 +684,87 @@
           e.preventDefault();
       });
   }
+
+  async function loadBoardFromDB(projectId) {
+  try {
+    // 1) Charger les colonnes (lists)
+    const resLists = await fetch('../get_lists.php?project_id=' + projectId);
+    const dataLists = await resLists.json();
+
+    if (dataLists.status !== 'success') {
+      console.error('Erreur get_lists:', dataLists.message);
+      return;
+    }
+
+    // ICI on remplit state.columns avec les lists de la BDD
+    state.columns = dataLists.lists.map(list => ({
+      id: list.id,          // = lists.id
+      title: list.title,
+      tasks: []
+    }));
+
+    // 2) Charger les cartes (cards)
+    const resCards = await fetch('../get_cards.php?project_id=' + projectId);
+    const dataCards = await resCards.json();
+
+    if (dataCards.status !== 'success') {
+      console.error('Erreur get_cards:', dataCards.message);
+      renderBoard();
+      return;
+    }
+
+    dataCards.cards.forEach(card => {
+      const col = state.columns.find(c => c.id === card.list_id);
+      if (!col) return;
+      col.tasks.push({
+        id: card.id,
+        text: card.title,
+        description: card.description || '',
+        priority: 3,
+        assignees: [],
+        completed: card.status === 'done'
+      });
+    });
+
+    renderBoard();
+  } catch (e) {
+    console.error('Erreur loadBoardFromDB:', e);
+  }
+}
+
+
+    // Colonnes dynamiques : on part d'un objet {list_id: {id,title,tasks:[]}}
+    const columnsMap = {};
+
+    data.cards.forEach(card => {
+      const listId = card.list_id;
+
+      if (!columnsMap[listId]) {
+        columnsMap[listId] = {
+          id: listId,
+          title: `Colonne ${listId}`,
+          tasks: []
+        };
+      }
+
+      columnsMap[listId].tasks.push({
+        id:        card.id,
+        text:      card.title,
+        description: card.description || '',
+        priority:  3,
+        assignees: [],
+        completed: card.status === 'done'
+      });
+    });
+
+    // Remplace state.columns par les colonnes trouvées (triées par id)
+    state.columns = Object.values(columnsMap).sort((a, b) => a.id - b.id);
+
+    renderBoard();
+    try {e =>
+    console.error('Erreur loadBoardFromDB:', e);
+  }
+ 
+
   // Initialiser l'application
-  init();
+  finally{};

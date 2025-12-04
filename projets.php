@@ -6,6 +6,11 @@ try {
     die('Erreur BDD : ' . $e->getMessage());
 }
 
+// TODO : à adapter : ici on suppose que l'id du projet arrive en GET
+$projectId = isset($_GET['project_id']) ? (int)$_GET['project_id'] : 0;
+
+// TODO : à adapter aussi : id de l'utilisateur connecté (session, etc.)
+$userId = 1; // remplace par $_SESSION['user_id'] ou autre
 ?>
 
 <!DOCTYPE html>
@@ -44,21 +49,24 @@ try {
 
             <!-- Zone principale du tableau -->
             <div class="board-container">
-                <div class="board" id="board"></div>
+                <!-- on passe l'id du projet au JS -->
+                <div class="board"
+                     id="board"
+                     data-project-id="<?php echo htmlspecialchars($projectId, ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Section Archives -->
-        <div class="archive-section">
-            <div class="archive-header">
-                <h2>📦 Archive</h2>
-                <button class="btn-toggle-archive" onclick="toggleArchive()">Afficher les archives</button>
-            </div>
-            <div class="archive-content" id="archiveContent">
-                <div id="archiveList" class="archive-list">
-                    <div class="archive-empty">Aucune tâche archivée pour le moment</div>
-                </div>
+    <div class="archive-section">
+        <div class="archive-header">
+            <h2>📦 Archive</h2>
+            <button class="btn-toggle-archive" onclick="toggleArchive()">Afficher les archives</button>
+        </div>
+        <div class="archive-content" id="archiveContent">
+            <div id="archiveList" class="archive-list">
+                <div class="archive-empty">Aucune tâche archivée pour le moment</div>
             </div>
         </div>
     </div>
@@ -113,6 +121,10 @@ try {
         </div>
     </div>
 
+    <!-- Exposer l'utilisateur courant au JS si besoin -->
+    <script>
+        window.currentUserId = <?php echo (int)$userId; ?>;
+    </script>
     <script src="page2/appprojets.js"></script>
 </body>
 </html>
