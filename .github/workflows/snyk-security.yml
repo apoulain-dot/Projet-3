@@ -33,10 +33,10 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       # Snyk Open Source (SCA)
-      - name: Snyk Open Source monitor
-        run: snyk monitor --all-projects
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - - name: Snyk Open Source monitor (PHP)
+          run: snyk monitor --file=composer.lock --package-manager=composer
+          env:
+           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       # Snyk IaC
       - name: Snyk IaC test and report
