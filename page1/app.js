@@ -791,7 +791,7 @@ function openProject(projectId) {
   } catch (e) {
     // ignore storage errors
   }
-  window.location.href = '../page2/projets.html';
+  window.location.href = '../projets.php';
 }
 
 function resetProjectForm() {
