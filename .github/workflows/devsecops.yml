@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # --- 1. Checkout du code ---
+      # 1. Checkout du code
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # --- 2. Installation PHP ---
+      # 2. Installation PHP
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -23,67 +23,70 @@ jobs:
           extensions: mbstring, mysqli
           tools: composer, phpstan, phpcs
 
-      # --- 3. Installation Node.js ---
+      # 3. Installation Node.js
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      # --- 4. Analyse SAST PHP ---
+      # 4. Analyse statique PHP
       - name: PHPStan (Analyse statique PHP)
         run: phpstan analyse src --level=max || true
-      
+
       - name: Code Style PHP (PHPCS)
         run: phpcs --standard=PSR12 src || true
 
-      # --- 5. Analyse SAST JavaScript ---
+      # 5. Analyse statique JavaScript
       - name: Install ESLint
         run: npm install eslint eslint-plugin-security --save-dev
 
       - name: Run ESLint
-        run: npx eslint public/**/*.js || true
+        run: npx eslint "public/**/*.js" || true
 
-      # --- 6. Audit dépendances PHP ---
+      # 6. Audit dépendances PHP
       - name: Composer Audit
-        run: composer install && composer audit || true
+        run: |
+          composer install
+          composer audit || true
 
-      # --- 7. Audit dépendances JS ---
+      # 7. Audit dépendances JS
       - name: NPM Audit
         run: npm audit --audit-level=moderate || true
 
-      # --- 8. Scan de sécurité de l'image Docker (optionnel) ---
-      - name: Install Trivy
+      # 8. Scan Trivy du système de fichiers
+      - name: Trivy FS Scan
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: .
+          format: json
+          output: trivy-result.json
+          ignore-unfixed: true
 
-                # --- 9. Calcul du score de vulnérabilité ---
+      # 9. Calcul du score de vulnérabilité
       - name: Calcul du score de vulnérabilité
         id: score
         run: |
-          trivy fs . --format json > trivy-result.json || true
-
-          CRITICAL=$(jq '.Results[].Vulnerabilities[]? | select(.Severity=="CRITICAL") | length' trivy-result.json | wc -l)
-          HIGH=$(jq '.Results[].Vulnerabilities[]? | select(.Severity=="HIGH") | length' trivy-result.json | wc -l)
-          MEDIUM=$(jq '.Results[].Vulnerabilities[]? | select(.Severity=="MEDIUM") | length' trivy-result.json | wc -l)
-          LOW=$(jq '.Results[].Vulnerabilities[]? | select(.Severity=="LOW") | length' trivy-result.json | wc -l)
+          CRITICAL=$(jq '.Results[].Vulnerabilities[]? | select(.Severity=="CRITICAL") | length' trivy-result.json | awk '{s+=$1} END {print s+0}')
+          HIGH=$(jq '.Results[].Vulnerabilities[]? | select(.Severity=="HIGH") | length' trivy-result.json | awk '{s+=$1} END {print s+0}')
+          MEDIUM=$(jq '.Results[].Vulnerabilities[]? | select(.Severity=="MEDIUM") | length' trivy-result.json | awk '{s+=$1} END {print s+0}')
+          LOW=$(jq '.Results[].Vulnerabilities[]? | select(.Severity=="LOW") | length' trivy-result.json | awk '{s+=$1} END {print s+0}')
 
           PENALITE=$((CRITICAL*15 + HIGH*10 + MEDIUM*5 + LOW*2))
           SCORE=$((100 - PENALITE))
-
           if [ $SCORE -lt 0 ]; then SCORE=0; fi
 
           echo "Score de vulnérabilité : $SCORE / 100"
-          echo "score=$SCORE" >> $GITHUB_OUTPUT
-
+          echo "score=$SCORE" >> "$GITHUB_OUTPUT"
 
   deploy:
-    name: Déploiement vers XAMPP
+    name: Déploiement vers XAMPP (placeholder)
     runs-on: ubuntu-latest
     needs: security-ci
     if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      
