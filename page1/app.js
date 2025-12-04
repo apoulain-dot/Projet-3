@@ -569,7 +569,7 @@ function renderCollaboratorsList() {
     const isSelected = selectedCollaborators.includes(contact.id);
     html += `
       <button type="button" class="btn btn--sm" data-add-collaborator="${contact.id}" style="background: ${isSelected ? 'var(--color-primary)' : 'var(--color-surface)'}; color: ${isSelected ? 'var(--color-btn-primary-text)' : 'var(--color-text)'}; border: 1px solid var(--color-border); cursor: pointer;">
-        ${contact.name}
+        ${contact.full_name}
       </button>
     `;
   });
@@ -586,7 +586,7 @@ function renderCollaboratorsList() {
       if (contact) {
         html += `
           <div style="background: var(--color-primary); color: var(--color-btn-primary-text); padding: 6px 12px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 13px;">
-            ${contact.name}
+            ${contact.full_name}
             <button type="button" class="btn" data-remove-collaborator="${id}" style="background: none; border: none; color: inherit; cursor: pointer; padding: 0; font-size: 16px; line-height: 1;">×</button>
           </div>
         `;
