@@ -1,28 +1,30 @@
 <?php
 header('Content-Type: application/json');
-require_once 'config.php'; // définit $bdd
+require 'config.php';
+
+$raw  = file_get_contents('php://input');
+$data = json_decode($raw, true);
+
+$fullName = trim($data['full_name'] ?? '');
+$email    = trim($data['email']     ?? '');
+$phone    = trim($data['phone']     ?? '');
+$role     = trim($data['role']      ?? '');
+$userId   = $data['user_id']        ?? null;
+
+if ($fullName === '' || $email === '') {
+    echo json_encode(['status' => 'error', 'message' => 'Nom et email requis']);
+    exit;
+}
 
 try {
-    $data = json_decode(file_get_contents('php://input'), true);
-
     $stmt = $bdd->prepare("
-        INSERT INTO contacts (full_name, email, phone, role)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO contacts (full_name, email, phone, role, user_id)
+        VALUES (?, ?, ?, ?, ?)
     ");
+    $stmt->execute([$fullName, $email, $phone, $role, $userId]);
 
-    $stmt->execute([
-        $data["full_name"] ?? null,
-        $data["email"] ?? null,
-        $data["phone"] ?? null,
-        $data["role"] ?? null
-    ]);
-
-    echo json_encode(["status" => "success"]);
-    exit;
-} catch (Throwable $e) {
-    echo json_encode([
-        "status" => "error",
-        "message" => $e->getMessage()
-    ]);
-    exit;
+    echo json_encode(['status' => 'success']);
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'Erreur serveur']);
 }

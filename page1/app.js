@@ -426,6 +426,7 @@ function showMainApp() {
   loadContactsFromDB();
 }
 
+
 function loadContactsFromDB() {
   fetch('../get_contacts.php')
     .then(res => res.json())
@@ -446,6 +447,17 @@ function loadContactsFromDB() {
     .catch(err => {
       console.error('Erreur fetch contacts:', err);
     });
+}
+
+async function loadContactsFromDB() {
+  try {
+    const response = await fetch('get_contacts.php?user_id=' + currentUserId);
+    const data = await response.json();
+    contacts = data.contacts || [];
+    renderContacts();
+  } catch (error) {
+    console.error('Erreur chargement contacts:', error);
+  }
 }
 
 
@@ -748,12 +760,29 @@ function editProject(projectId) {
   document.getElementById('addProjectModal').classList.remove('hidden');
 }
 
-function deleteProject(projectId) {
-  if (confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
-    projects = projects.filter(p => p.id !== projectId);
-    renderProjects();
+async function deleteProject(id) {
+  if (!confirm('Supprimer ce projet ?')) return;
+
+  try {
+    const res = await fetch('delete_project.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+
+    if (data.status === 'success') {
+      projects = projects.filter(p => p.id !== id);
+      renderProjects();
+    } else {
+      alert(data.message || 'Erreur lors de la suppression');
+    }
+  } catch (e) {
+    console.error('Erreur deleteProject:', e);
+    alert('Erreur de connexion au serveur');
   }
 }
+
 
 function openProject(projectId) {
   // Stocke l'id du projet et navigue vers la page Kanban
@@ -777,17 +806,17 @@ function resetProjectForm() {
 }
 
 async function addOrUpdateProject() {
-  const nameInput = document.getElementById('projectName');
-  const descInput = document.getElementById('projectDescription');
-  const statusInput = document.getElementById('projectStatus');
+  const nameInput     = document.getElementById('projectName');
+  const descInput     = document.getElementById('projectDescription');
+  const statusInput   = document.getElementById('projectStatus');
   const deadlineInput = document.getElementById('projectDeadline');
   const contactSelect = document.getElementById('projectContact');
 
-  const name = nameInput.value.trim();
+  const name        = nameInput.value.trim();
   const description = descInput.value.trim();
-  const status = statusInput.value;
-  const dateLimite = deadlineInput.value;      // format yyyy-mm-dd
-  const contactId = contactSelect ? contactSelect.value || null : null;
+  const status      = statusInput.value;
+  const dateLimite  = deadlineInput.value || null;
+  const contactId   = contactSelect ? (contactSelect.value || null) : null;
 
   if (!name || !description) {
     alert('Nom et description sont obligatoires');
@@ -795,38 +824,47 @@ async function addOrUpdateProject() {
   }
 
   const projectData = {
+    id: editingProjectId,      // null si création
     name: name,
     description: description,
     status: status,
     date_limite: dateLimite,
     contact_id: contactId,
-    user_id: currentUserId,
+    user_id: currentUserId     // pour garder l’utilisateur propriétaire
   };
 
+  // Si editingProjectId existe → update, sinon → création
+  const url = editingProjectId ? 'update_project.php' : 'add_project.php';
+
   try {
-    const response = await fetch('add_project.php', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(projectData)
-  });
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(projectData)
+    });
+
+    if (!response.ok) {
+      throw new Error('HTTP ' + response.status);
+    }
 
     const data = await response.json();
 
     if (data.status === 'success') {
+      // On recharge la liste depuis la DB pour avoir la vraie version
+      await loadProjectsFromDB();
+
       document.getElementById('addProjectModal').classList.add('hidden');
       document.getElementById('addProjectForm').reset();
-      await loadProjectsFromDB();
-      alert('Projet créé avec succès !');
+      editingProjectId = null;   // on sort du mode édition
     } else {
-      alert('Erreur : ' + (data.message || 'Impossible de créer le projet'));
+      alert(data.message || 'Erreur lors de l’enregistrement du projet');
     }
   } catch (error) {
-    console.error('Erreur:', error);
+    console.error('Erreur addOrUpdateProject:', error);
     alert('Erreur de connexion au serveur');
   }
 }
+
 
 async function loadProjectsFromDB() {
   try {
@@ -865,16 +903,19 @@ function renderContacts() {
 function createContactCard(contact) {
   const card = document.createElement('div');
   card.className = 'contact-card';
-  
-  const initials = contact.name
+
+  // Utiliser contact.name (JS) ou full_name (DB)
+  const displayName = contact.name || contact.full_name || '';
+
+  const initials = displayName
     .split(' ')
     .map(n => n[0])
     .join('')
     .toUpperCase();
-  
+
   card.innerHTML = `
     <div class="contact-avatar">${initials}</div>
-    <div class="contact-name">${contact.name}</div>
+    <div class="contact-name">${displayName}</div>
     <div class="contact-role">${contact.role || 'Non spécifié'}</div>
     <div class="contact-info">
       <div class="contact-info-item">
@@ -894,53 +935,59 @@ function createContactCard(contact) {
       ` : ''}
     </div>
   `;
-  
+
   return card;
 }
 
-function addContact() {
-  const nameInput = document.getElementById('contactName');
+async function addContact() {
+  const nameInput  = document.getElementById('contactName');
   const emailInput = document.getElementById('contactEmail');
   const phoneInput = document.getElementById('contactPhone');
-  const roleInput = document.getElementById('contactRole');
+  const roleInput  = document.getElementById('contactRole');
 
   const newContact = {
     full_name: nameInput.value.trim(),
-    email: emailInput.value.trim(),
-    phone: phoneInput.value.trim(),
-    role: roleInput.value.trim()
+    email:     emailInput.value.trim(),
+    phone:     phoneInput.value.trim(),
+    role:      roleInput.value.trim(),
+    user_id:   currentUserId          // <-- lier au user connecté
   };
 
-  fetch('../add_contact.php', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(newContact)
-  })
-    .then(res => {
-      if (!res.ok) {
-        throw new Error('HTTP ' + res.status);
-      }
-      return res.json();
-    })
-    .then(data => {
-      if (data.status === 'success') {
-        const newId = contacts.length ? contacts[contacts.length - 1].id + 1 : 1;
-        contacts.push({
-          id: newId,
-          name: newContact.full_name,
-          email: newContact.email,
-          phone: newContact.phone,
-          role: newContact.role
-        });
-        renderContacts();
-        document.getElementById('addContactModal').classList.add('hidden');
-        document.getElementById('addContactForm').reset();
-      } else {
-        alert(data.message || 'Erreur lors de la création du contact');
-      }
-    })
-    .catch(err => {
-      console.error('Erreur addContact:', err);
-      alert('Erreur de connexion au serveur');
+  try {
+    const res = await fetch('add_contact.php', {   // même dossier que index.php
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newContact)
     });
+
+    if (!res.ok) {
+      throw new Error('HTTP ' + res.status);
+    }
+
+    const data = await res.json();
+
+    if (data.status === 'success') {
+      // Si ton PHP renvoie l'id créé, utilise-le, sinon garde la logique locale
+      const newId = data.id
+        ? data.id
+        : (contacts.length ? contacts[contacts.length - 1].id + 1 : 1);
+
+      contacts.push({
+        id:    newId,
+        name:  newContact.full_name,
+        email: newContact.email,
+        phone: newContact.phone,
+        role:  newContact.role
+      });
+
+      renderContacts();
+      document.getElementById('addContactModal').classList.add('hidden');
+      document.getElementById('addContactForm').reset();
+    } else {
+      alert(data.message || 'Erreur lors de la création du contact');
+    }
+  } catch (err) {
+    console.error('Erreur addContact:', err);
+    alert('Erreur de connexion au serveur');
+  }
 }
