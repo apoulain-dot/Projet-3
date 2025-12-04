@@ -32,11 +32,11 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      # Snyk Open Source (SCA)
-      - - name: Snyk Open Source monitor (PHP)
-          run: snyk monitor --file=composer.lock --package-manager=composer
-          env:
-           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      # ❌ Snyk Open Source (SCA) désactivé car pas de composer.lock
+      # - name: Snyk Open Source monitor (PHP)
+      #   run: snyk monitor --file=composer.lock --package-manager=composer
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       # Snyk IaC
       - name: Snyk IaC test and report
@@ -47,7 +47,7 @@ jobs:
       # Build Docker image pour analyse container
       - name: Build Docker image
         run: docker build -t your/image-to-test .
-      
+
       - name: Snyk Container monitor
         run: snyk container monitor your/image-to-test --file=Dockerfile
         env:
