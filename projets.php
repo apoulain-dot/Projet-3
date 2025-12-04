@@ -28,7 +28,7 @@ $userId = 1; // remplace par $_SESSION['user_id'] ou autre
     <header class="app-header">
         <div class="container">
             <div class="header-content">
-                <button class="btnGTF" onclick="window.location.href='../page1/index.html'">Guardia Task Force</button>
+                <button class="btnGTF" onclick="window.location.href='index.php'">Guardia Task Force</button>
                 <div class="header-actions">
                     <span id="userWelcome" class="user-welcome"></span>
                 </div>

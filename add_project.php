@@ -1,66 +1,89 @@
 <?php
+session_start();
 header('Content-Type: application/json');
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
 
-require 'config.php'; // $bdd (PDO)
+// === LOGGING POUR DÉBOGUER ===
+$logFile = __DIR__ . '/debug.log';
+file_put_contents($logFile, "\n=== ADD PROJECT " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
 
-// 1) Lire le JSON
-$raw  = file_get_contents('php://input');
-$data = json_decode($raw, true);
+// Récupérer les données JSON
+$input = file_get_contents('php://input');
+file_put_contents($logFile, "INPUT BRUT: " . $input . "\n", FILE_APPEND);
 
-$name        = trim($data['name']        ?? '');
-$description = trim($data['description'] ?? '');
-$status      = $data['status']           ?? 'inprogress';
-$dateLimite  = $data['date_limite']      ?? null;
-$contactId   = $data['contact_id']       ?? null;
-$userId      = $data['user_id']          ?? null;  // <- prend bien le 2
+$data = json_decode($input, true);
+file_put_contents($logFile, "DATA DÉCODÉE: " . json_encode($data) . "\n", FILE_APPEND);
 
-// ...
+// Récupérer les paramètres
+$name = isset($data['name']) ? trim($data['name']) : '';
+$description = isset($data['description']) ? trim($data['description']) : '';
+$status = isset($data['status']) ? $data['status'] : 'inprogress';
+$dateLimite = isset($data['date_limite']) ? $data['date_limite'] : null;
+$contactId = isset($data['contact_id']) ? $data['contact_id'] : null;
+$userId = isset($data['user_id']) ? $data['user_id'] : null;
+$collaborators = isset($data['collaborators']) ? $data['collaborators'] : [];
 
-$stmt = $bdd->prepare("
-    INSERT INTO projets (name, description, status, date_limite, contact_id, user_id)
-    VALUES (?, ?, ?, ?, ?, ?)
-");
+file_put_contents($logFile, "PARAMÈTRES: name=$name, desc=$description, user_id=$userId\n", FILE_APPEND);
+file_put_contents($logFile, "COLLABORATEURS: " . json_encode($collaborators) . "\n", FILE_APPEND);
 
-$stmt->execute([
-    $name,
-    $description,
-    $status,
-    $dateLimite,
-    $contactId,
-    $userId           // <- inséré en dernier
-]);
-
-
-// 3) Validation minimum
+// Validation minimum
 if ($name === '' || $description === '') {
+    file_put_contents($logFile, "ERREUR VALIDATION\n", FILE_APPEND);
     http_response_code(400);
     echo json_encode(['status' => 'error', 'message' => 'Nom et description obligatoires']);
     exit;
 }
 
 try {
-    // 4) Requête SQL : choisis la version qui correspond à ta table
-
-    // VERSION SANS user_id (si ta table = id, name, description, status, date_limite, contact_id)
-    $stmt = $bdd->prepare("
-        INSERT INTO projets (name, description, status, date_limite, contact_id)
-        VALUES (?, ?, ?, ?, ?)
-    ");
-    $stmt->execute([$name, $description, $status, $dateLimite, $contactId]);
-
-    /*
-    // VERSION AVEC user_id (si tu as ajouté la colonne user_id)
+    // Inclure la connexion à la BD
+    require_once 'config.php';
+    file_put_contents($logFile, "CONNEXION: OK\n", FILE_APPEND);
+    
+    // 1) Insérer le projet
     $stmt = $bdd->prepare("
         INSERT INTO projets (name, description, status, date_limite, contact_id, user_id)
         VALUES (?, ?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$name, $description, $status, $dateLimite, $contactId, $userId]);
-    */
-
-    echo json_encode(['status' => 'success']);
+    $stmt->execute([
+        $name,
+        $description,
+        $status,
+        $dateLimite,
+        $contactId,
+        $userId
+    ]);
+    
+    $projectId = $bdd->lastInsertId();
+    file_put_contents($logFile, "PROJECT CREATED: id=$projectId\n", FILE_APPEND);
+    
+    // 2) Insérer les collaborateurs si fournis
+    if (!empty($collaborators) && is_array($collaborators)) {
+        file_put_contents($logFile, "INSERTING COLLABORATORS...\n", FILE_APPEND);
+        $stmtCollab = $bdd->prepare("
+            INSERT INTO project_collaborators (project_id, contact_id)
+            VALUES (?, ?)
+        ");
+        
+        foreach ($collaborators as $cId) {
+            $cId = (int)$cId;
+            if ($cId > 0) {
+                $stmtCollab->execute([$projectId, $cId]);
+                file_put_contents($logFile, "  - INSERTED: project_id=$projectId, contact_id=$cId\n", FILE_APPEND);
+            }
+        }
+    } else {
+        file_put_contents($logFile, "NO COLLABORATORS TO INSERT\n", FILE_APPEND);
+    }
+    
+    file_put_contents($logFile, "SUCCESS\n", FILE_APPEND);
+    echo json_encode(['status' => 'success', 'id' => $projectId]);
+    
 } catch (PDOException $e) {
+    file_put_contents($logFile, "DATABASE ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
     http_response_code(500);
-    echo json_encode(['status' => 'error', 'message' => 'Erreur serveur']);
+    echo json_encode(['status' => 'error', 'message' => 'Erreur serveur: ' . $e->getMessage()]);
+} catch (Exception $e) {
+    file_put_contents($logFile, "GENERAL ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'Erreur: ' . $e->getMessage()]);
 }
+?>

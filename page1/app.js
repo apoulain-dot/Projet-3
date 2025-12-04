@@ -426,37 +426,27 @@ function showMainApp() {
   loadContactsFromDB();
 }
 
-
-function loadContactsFromDB() {
-  fetch('../get_contacts.php')
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === 'success') {
-        contacts = data.contacts.map(c => ({
-          id: parseInt(c.id, 10),
-          name: c.full_name,
-          email: c.email,
-          phone: c.phone,
-          role: c.role
-        }));
-        renderContacts();
-      } else {
-        console.error(data.message || 'Erreur lors du chargement des contacts');
-      }
-    })
-    .catch(err => {
-      console.error('Erreur fetch contacts:', err);
-    });
-}
-
 async function loadContactsFromDB() {
   try {
-    const response = await fetch('get_contacts.php?user_id=' + currentUserId);
+    const response = await fetch('../get_contacts.php?user_id=' + currentUserId);
     const data = await response.json();
-    contacts = data.contacts || [];
+    
+    if (data.status === 'success') {
+      contacts = data.contacts.map(c => ({
+        id: parseInt(c.id, 10),
+        name: c.full_name,
+        email: c.email,
+        phone: c.phone,
+        role: c.role
+      }));
+    } else {
+      contacts = [];
+      console.error(data.message || 'Erreur lors du chargement des contacts');
+    }
     renderContacts();
   } catch (error) {
     console.error('Erreur chargement contacts:', error);
+    contacts = [];
   }
 }
 
@@ -742,12 +732,16 @@ function editProject(projectId) {
   editingProjectId = projectId;
   selectedCollaborators = [];
 
-  
   // Remplir le formulaire avec les données du projet
   document.getElementById('projectName').value = project.name;
   document.getElementById('projectDescription').value = project.description;
   document.getElementById('projectStatus').value = project.status;
-  document.getElementById('projectDeadline').value = project.deadline;
+  document.getElementById('projectDeadline').value = project.date_limite || project.deadline;
+
+  // Charger les collaborateurs existants
+  if (project.collaborators && Array.isArray(project.collaborators)) {
+    selectedCollaborators = [...project.collaborators];
+  }
 
   // Changer le titre de la modale et le texte du bouton
   document.querySelector('#addProjectModal .modal-header h2').textContent = 'Modifier le projet';
@@ -760,11 +754,12 @@ function editProject(projectId) {
   document.getElementById('addProjectModal').classList.remove('hidden');
 }
 
+
 async function deleteProject(id) {
   if (!confirm('Supprimer ce projet ?')) return;
 
   try {
-    const res = await fetch('delete_project.php', {
+    const res = await fetch('../delete_project.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id })
@@ -827,17 +822,17 @@ async function addOrUpdateProject() {
   }
 
   const projectData = {
-    id: editingProjectId,      // null si création
+    id: editingProjectId,
     name: name,
     description: description,
     status: status,
     date_limite: dateLimite,
     contact_id: contactId,
-    user_id: currentUserId     // pour garder l’utilisateur propriétaire
+    collaborators: selectedCollaborators,  // ← AJOUTE CETTE LIGNE
+    user_id: currentUserId
   };
 
-  // Si editingProjectId existe → update, sinon → création
-  const url = editingProjectId ? 'update_project.php' : 'add_project.php';
+  const url = editingProjectId ? '../update_project.php' : '../add_project.php';
 
   try {
     const response = await fetch(url, {
@@ -853,14 +848,12 @@ async function addOrUpdateProject() {
     const data = await response.json();
 
     if (data.status === 'success') {
-      // On recharge la liste depuis la DB pour avoir la vraie version
       await loadProjectsFromDB();
-
       document.getElementById('addProjectModal').classList.add('hidden');
       document.getElementById('addProjectForm').reset();
-      editingProjectId = null;   // on sort du mode édition
+      editingProjectId = null;
     } else {
-      alert(data.message || 'Erreur lors de l’enregistrement du projet');
+      alert(data.message || 'Erreur lors de l\'enregistrementdu projet');
     }
   } catch (error) {
     console.error('Erreur addOrUpdateProject:', error);
@@ -869,9 +862,10 @@ async function addOrUpdateProject() {
 }
 
 
+
 async function loadProjectsFromDB() {
   try {
-    const response = await fetch('get_projects.php?user_id=' + currentUserId);
+    const response = await fetch('../get_projects.php?user_id=' + currentUserId);
     const data = await response.json();
     projects = data;
     renderProjects();
@@ -948,7 +942,7 @@ async function addContact() {
   const phoneInput = document.getElementById('contactPhone');
   const roleInput  = document.getElementById('contactRole');
 
-  const newContact = {
+  const newContact = {  
     full_name: nameInput.value.trim(),
     email:     emailInput.value.trim(),
     phone:     phoneInput.value.trim(),
@@ -957,7 +951,7 @@ async function addContact() {
   };
 
   try {
-    const res = await fetch('add_contact.php', {   // même dossier que index.php
+    const res = await fetch('../add_contact.php', {   // même dossier que index.php
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newContact)
