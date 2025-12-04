@@ -1,0 +1,62 @@
+name: SonarCloud Scan
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+  sonarcloud:
+    name: Analyse SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      # 1️⃣ Récupération du code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2️⃣ Setup PHP
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, mysqli
+          tools: composer, phpstan, phpcs
+
+      # 3️⃣ Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # 4️⃣ Installation dépendances PHP et JS
+      - name: Install PHP dependencies
+        run: composer install
+
+      - name: Install JS dependencies
+        run: npm install
+
+      # 5️⃣ Analyse statique PHP
+      - name: PHPStan (Analyse statique PHP)
+        run: phpstan analyse src --level=max || true
+
+      - name: PHPCS (Code style PHP)
+        run: phpcs --standard=PSR12 src || true
+
+      # 6️⃣ Analyse statique JS
+      - name: ESLint
+        run: npx eslint public/**/*.js || true
+
+      # 7️⃣ Audit dépendances
+      - name: Composer Audit
+        run: composer audit || true
+
+      - name: NPM Audit
+        run: npm audit --audit-level=moderate || true
+
+      # 8️⃣ SonarCloud Scan
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      # fourni par GitHub
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}        # token SonarCloud que tu crées
+          SONAR_HOST_URL: https://sonarcloud.io
