@@ -693,7 +693,8 @@ function editProject(projectId) {
   if (!project) return;
 
   editingProjectId = projectId;
-  selectedCollaborators = [...project.collaborators];
+  selectedCollaborators = [];
+
   
   // Remplir le formulaire avec les données du projet
   document.getElementById('projectName').value = project.name;
@@ -740,43 +741,66 @@ function resetProjectForm() {
   }
 }
 
-function addOrUpdateProject() {
-  const name = document.getElementById('projectName').value;
-  const description = document.getElementById('projectDescription').value;
-  const status = document.getElementById('projectStatus').value;
-  const deadline = document.getElementById('projectDeadline').value;
+async function addOrUpdateProject() {
+  const nameInput = document.getElementById('projectName');
+  const descInput = document.getElementById('projectDescription');
+  const statusInput = document.getElementById('projectStatus');
+  const deadlineInput = document.getElementById('projectDeadline');
+  const contactSelect = document.getElementById('projectContact');
 
-  if (editingProjectId) {
-    // Modification d'un projet existant
-    const projectIndex = projects.findIndex(p => p.id === editingProjectId);
-    if (projectIndex !== -1) {
-      projects[projectIndex] = {
-        ...projects[projectIndex],
-        name,
-        description,
-        status,
-        deadline,
-        collaborators: selectedCollaborators
-      };
-    }
-  } else {
-    // Création d'un nouveau projet
-    const newProject = {
-      id: Math.max(...projects.map(p => p.id), 0) + 1,
-      name,
-      description,
-      status,
-      deadline,
-      collaborators: selectedCollaborators
-    };
-    projects.push(newProject);
+  const name = nameInput.value.trim();
+  const description = descInput.value.trim();
+  const status = statusInput.value;
+  const dateLimite = deadlineInput.value;      // format yyyy-mm-dd
+  const contactId = contactSelect ? contactSelect.value || null : null;
+
+  if (!name || !description) {
+    alert('Nom et description sont obligatoires');
+    return;
   }
 
-  renderProjects();
-  document.getElementById('addProjectModal').classList.add('hidden');
-  resetProjectForm();
-  editingProjectId = null;
+  const projectData = {
+    name: name,
+    description: description,
+    status: status,
+    date_limite: dateLimite,
+    contact_id: contactId
+  };
+
+  try {
+    const response = await fetch('add_project.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(projectData)
+    });
+
+    const data = await response.json();
+
+    if (data.status === 'success') {
+      document.getElementById('addProjectModal').classList.add('hidden');
+      document.getElementById('addProjectForm').reset();
+      await loadProjectsFromDB();
+      alert('Projet créé avec succès !');
+    } else {
+      alert('Erreur : ' + (data.message || 'Impossible de créer le projet'));
+    }
+  } catch (error) {
+    console.error('Erreur:', error);
+    alert('Erreur de connexion au serveur');
+  }
 }
+
+async function loadProjectsFromDB() {
+  try {
+    const response = await fetch('get_projects.php');
+    const data = await response.json();
+    projects = data;      // on remplace le tableau local
+    renderProjects();     // réaffiche la liste
+  } catch (error) {
+    console.error('Erreur chargement projets:', error);
+  }
+}
+
 
 // ==========================================
 // GESTION DES CONTACTS
